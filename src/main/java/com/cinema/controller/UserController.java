@@ -4,7 +4,9 @@ import com.cinema.model.User;
 import com.cinema.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -19,6 +21,15 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<User> register(@RequestBody User user) {
         return ResponseEntity.ok(userService.register(user));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> request) {
+        String token = userService.login(
+                request.get("email"),
+                request.get("password")
+        );
+        return ResponseEntity.ok(Map.of("token", token));
     }
 
     @GetMapping
