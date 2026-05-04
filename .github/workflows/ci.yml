@@ -1,73 +1,45 @@
-
 name: Cinema App CI/CD
 
-
-
 on:
-
   push:
-
     branches: [ main ]
-
   pull_request:
-
     branches: [ main ]
-
-
 
 jobs:
-
   build-and-test:
-
     runs-on: ubuntu-latest
 
-
-
     steps:
-
       - name: Checkout code
-
         uses: actions/checkout@v4
-
-
+        with:
+          fetch-depth: 0
 
       - name: Set up Java 17
-
         uses: actions/setup-java@v4
-
         with:
-
           java-version: '17'
-
           distribution: 'temurin'
 
-
-
       - name: Cache Maven packages
-
         uses: actions/cache@v3
-
         with:
-
           path: ~/.m2
-
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
 
-
-
       - name: Build with Maven
-
         run: mvn clean compile
 
-
-
       - name: Run tests
-
         run: mvn test
 
-
+      - name: SonarCloud analysis
+        run: mvn sonar:sonar
+          -Dsonar.projectKey=Mahjoub07_cinema-reservation-system
+          -Dsonar.organization=mahjoub07
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
       - name: Build JAR
-
         run: mvn package -DskipTests
-
