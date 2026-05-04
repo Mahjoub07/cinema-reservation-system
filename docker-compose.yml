@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: cinema-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: Mahjoub!@2006
+      MYSQL_DATABASE: cinema_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  app:
+    build: .
+    container_name: cinema-app
+    ports:
+      - "9090:9090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/cinema_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Mahjoub!@2006
+    depends_on:
+      - mysql
+
+volumes:
+  mysql-data:
