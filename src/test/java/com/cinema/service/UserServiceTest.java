@@ -60,7 +60,7 @@ class UserServiceTest {
     void shouldThrowExceptionWhenEmailAlreadyExists() {
         when(userRepository.existsByEmail(user.getEmail())).thenReturn(true);
 
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> userService.register(user));
 
         assertEquals("Email already in use", exception.getMessage());
@@ -86,7 +86,7 @@ class UserServiceTest {
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(any(), any())).thenReturn(false);
 
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> userService.login("mahjoub@cinema.com", "wrongpassword"));
 
         assertEquals("Invalid password", exception.getMessage());
