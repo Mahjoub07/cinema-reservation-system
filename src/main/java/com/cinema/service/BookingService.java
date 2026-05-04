@@ -25,17 +25,16 @@ public class BookingService {
 
     public Booking createBooking(Long userId, Long movieId, int seats) {
         Movie movie = movieService.getMovieById(movieId);
-        User user = userService.findByEmail(
-            userService.findAll().stream()
-                .filter(u -> u.getId().equals(userId))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("User not found"))
-                .getEmail()
-        ).orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Check seats FIRST before anything else
         if (movie.getAvailableSeats() < seats) {
             throw new RuntimeException("Not enough seats available");
         }
+
+        User user = userService.findAll().stream()
+                .filter(u -> u.getId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         movie.setAvailableSeats(movie.getAvailableSeats() - seats);
         movieService.addMovie(movie);
