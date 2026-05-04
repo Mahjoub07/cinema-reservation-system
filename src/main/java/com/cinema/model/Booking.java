@@ -22,6 +22,11 @@ public class Booking {
     private int numberOfSeats;
     private LocalDateTime bookingDate;
     private String status; // "CONFIRMED", "CANCELLED"
+    @Column(length = 5000)
+    private String qrCode;
+
+    public String getQrCode() { return qrCode; }
+    public void setQrCode(String qrCode) { this.qrCode = qrCode; }
 
     // Getters and Setters
     public Long getId() { return id; }
