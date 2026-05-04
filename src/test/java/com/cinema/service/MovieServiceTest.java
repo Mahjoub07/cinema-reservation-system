@@ -97,4 +97,32 @@ class MovieServiceTest {
 
         verify(movieRepository, times(1)).deleteById(1L);
     }
+    @Test
+    void shouldUpdateMovie() {
+        Movie updated = new Movie();
+        updated.setTitle("Inception 2");
+        updated.setDescription("Sequel");
+        updated.setGenre("Sci-Fi");
+        updated.setDuration(160);
+        updated.setAvailableSeats(80);
+
+        when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
+        when(movieRepository.save(any(Movie.class))).thenReturn(updated);
+
+        Movie result = movieService.updateMovie(1L, updated);
+
+        assertNotNull(result);
+        assertEquals("Inception 2", result.getTitle());
+        verify(movieRepository, times(1)).save(any(Movie.class));
+    }
+
+    @Test
+    void shouldSearchMoviesByGenre() {
+        when(movieRepository.findByGenre("Sci-Fi")).thenReturn(Arrays.asList(movie));
+
+        List<Movie> result = movieRepository.findByGenre("Sci-Fi");
+
+        assertEquals(1, result.size());
+        assertEquals("Sci-Fi", result.get(0).getGenre());
+    }
 }
