@@ -31,15 +31,17 @@ jobs:
       - name: Build with Maven
         run: mvn clean compile
 
-      - name: Run tests
-        run: mvn test
+      - name: Run tests with coverage
+        run: mvn test jacoco:report
 
       - name: SonarCloud analysis
-        run: mvn sonar:sonar
-          -Dsonar.projectKey=Mahjoub07_cinema-reservation-system
-          -Dsonar.organization=mahjoub07
-          -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=Mahjoub07_cinema-reservation-system \
+            -Dsonar.organization=mahjoub07 \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
 
       - name: Build JAR
         run: mvn package -DskipTests
