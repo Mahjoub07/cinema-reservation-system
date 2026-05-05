@@ -20,7 +20,7 @@ class JwtUtilTest {
 
     @Test
     void shouldGenerateToken() {
-        String token = jwtUtil.generateToken("mahjoub@cinema.com");
+        String token = jwtUtil.generateToken("mahjoub@cinema.com", "ROLE_USER");
 
         assertNotNull(token);
         assertFalse(token.isEmpty());
@@ -28,7 +28,7 @@ class JwtUtilTest {
 
     @Test
     void shouldExtractEmailFromToken() {
-        String token = jwtUtil.generateToken("mahjoub@cinema.com");
+        String token = jwtUtil.generateToken("mahjoub@cinema.com", "ROLE_USER");
 
         String email = jwtUtil.extractEmail(token);
 
@@ -37,7 +37,7 @@ class JwtUtilTest {
 
     @Test
     void shouldValidateToken() {
-        String token = jwtUtil.generateToken("mahjoub@cinema.com");
+        String token = jwtUtil.generateToken("mahjoub@cinema.com", "ROLE_USER");
 
         assertTrue(jwtUtil.validateToken(token));
     }
@@ -49,7 +49,7 @@ class JwtUtilTest {
 
     @Test
     void shouldRejectTamperedToken() {
-        String token = jwtUtil.generateToken("mahjoub@cinema.com");
+        String token = jwtUtil.generateToken("mahjoub@cinema.com", "ROLE_USER");
         String tamperedToken = token + "tampered";
 
         assertFalse(jwtUtil.validateToken(tamperedToken));

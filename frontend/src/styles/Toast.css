@@ -1,0 +1,7 @@
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+.toast { padding: 15px 20px; border-radius: 4px; color: #fff; min-width: 250px; animation: slideIn 0.3s ease; }
+.toast-success { background: #46d369; }
+.toast-error { background: #e50914; }
+.toast-info { background: #333; }
+.toast-warning { background: #ffa500; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }

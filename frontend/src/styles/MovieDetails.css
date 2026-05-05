@@ -1,0 +1,17 @@
+.movie-details-container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+.movie-details-header { display: flex; gap: 40px; align-items: flex-start; }
+.movie-poster-large { background: linear-gradient(135deg, #e50914, #b20710); width: 300px; height: 450px; display: flex; align-items: center; justify-content: center; border-radius: 8px; flex-shrink: 0; }
+.movie-poster-large h1 { color: #fff; font-size: 1.5rem; text-align: center; padding: 20px; }
+.movie-details-info { flex: 1; }
+.movie-details-info h1 { color: #e50914; font-size: 2.5rem; margin-bottom: 20px; }
+.movie-genre { color: #e50914; font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
+.movie-duration, .movie-seats, .movie-time { color: #999; font-size: 1rem; margin-bottom: 10px; }
+.movie-description { color: #ccc; line-height: 1.6; margin: 20px 0; font-size: 1.1rem; }
+.book-now-button { background: #e50914; color: #fff; border: none; padding: 15px 40px; border-radius: 4px; font-size: 1.1rem; cursor: pointer; transition: all 0.3s; }
+.book-now-button:hover { background: #b20710; transform: translateY(-2px); }
+.book-now-button:disabled { background: #333; cursor: not-allowed; transform: none; }
+@media (max-width: 768px) {
+  .movie-details-header { flex-direction: column; align-items: center; }
+  .movie-poster-large { width: 100%; max-width: 300px; height: 400px; }
+  .movie-details-info { text-align: center; }
+}

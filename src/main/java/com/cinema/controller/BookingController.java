@@ -1,8 +1,11 @@
 package com.cinema.controller;
 
-import com.cinema.model.Booking;
+import com.cinema.dto.BookingDTO;
+import com.cinema.dto.BookingRequestDTO;
 import com.cinema.service.BookingService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -17,16 +20,27 @@ public class BookingController {
     }
 
     @PostMapping
-    public ResponseEntity<Booking> createBooking(
-            @RequestParam Long userId,
-            @RequestParam Long movieId,
-            @RequestParam int seats) {
-        return ResponseEntity.ok(bookingService.createBooking(userId, movieId, seats));
+    public ResponseEntity<BookingDTO> createBooking(
+            @Valid @RequestBody BookingRequestDTO request,
+            Authentication authentication) {
+        String email = authentication.getName();
+        return ResponseEntity.ok(bookingService.createBooking(email, request));
+    }
+
+    @GetMapping("/my-bookings")
+    public ResponseEntity<List<BookingDTO>> getMyBookings(Authentication authentication) {
+        String email = authentication.getName();
+        return ResponseEntity.ok(bookingService.getUserBookings(email));
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Booking>> getUserBookings(@PathVariable Long userId) {
-        return ResponseEntity.ok(bookingService.getUserBookings(userId));
+    public ResponseEntity<List<BookingDTO>> getUserBookings(@PathVariable Long userId) {
+        return ResponseEntity.ok(bookingService.getUserBookingsByUserId(userId));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<BookingDTO>> getAllBookings(Authentication authentication) {
+        return ResponseEntity.ok(bookingService.getAllBookings());
     }
 
     @PutMapping("/{bookingId}/cancel")

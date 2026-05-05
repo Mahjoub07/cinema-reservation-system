@@ -1,0 +1,9 @@
+.bookings-container h1 { color: #e50914; margin-bottom: 30px; }
+.booking-card { background: #141414; padding: 25px; border-radius: 8px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+.booking-card.cancelled { opacity: 0.5; }
+.booking-info h3 { color: #fff; margin-bottom: 10px; }
+.booking-info p { color: #999; margin-bottom: 5px; }
+.status.confirmed { color: #46d369; }
+.status.cancelled { color: #e50914; }
+.cancel-button { background: #e50914; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; }
+.cancel-button:hover { background: #b20710; }

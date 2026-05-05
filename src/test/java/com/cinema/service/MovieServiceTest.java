@@ -1,5 +1,7 @@
 package com.cinema.service;
 
+import com.cinema.dto.MovieDTO;
+import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.model.Movie;
 import com.cinema.repository.MovieRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +28,7 @@ class MovieServiceTest {
     private MovieService movieService;
 
     private Movie movie;
+    private MovieDTO movieDTO;
 
     @BeforeEach
     void setUp() {
@@ -35,24 +38,26 @@ class MovieServiceTest {
         movie.setGenre("Sci-Fi");
         movie.setDuration(148);
         movie.setAvailableSeats(100);
+
+        movieDTO = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, null, 100, null);
     }
 
     @Test
     void shouldAddMovieSuccessfully() {
-        when(movieRepository.save(movie)).thenReturn(movie);
+        when(movieRepository.save(any(Movie.class))).thenReturn(movie);
 
-        Movie result = movieService.addMovie(movie);
+        MovieDTO result = movieService.addMovie(movieDTO);
 
         assertNotNull(result);
         assertEquals("Inception", result.getTitle());
-        verify(movieRepository, times(1)).save(movie);
+        verify(movieRepository, times(1)).save(any(Movie.class));
     }
 
     @Test
     void shouldGetAllMovies() {
         when(movieRepository.findAll()).thenReturn(Arrays.asList(movie));
 
-        List<Movie> result = movieService.getAllMovies();
+        List<MovieDTO> result = movieService.getAllMovies();
 
         assertEquals(1, result.size());
         assertEquals("Inception", result.get(0).getTitle());
@@ -72,7 +77,7 @@ class MovieServiceTest {
     void shouldThrowExceptionWhenMovieNotFound() {
         when(movieRepository.findById(99L)).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
                 () -> movieService.getMovieById(99L));
 
         assertEquals("Movie not found", exception.getMessage());
@@ -83,7 +88,7 @@ class MovieServiceTest {
         when(movieRepository.findByTitleContainingIgnoreCase("inc"))
                 .thenReturn(Arrays.asList(movie));
 
-        List<Movie> result = movieService.searchByTitle("inc");
+        List<MovieDTO> result = movieService.searchByTitle("inc");
 
         assertEquals(1, result.size());
         assertEquals("Inception", result.get(0).getTitle());
@@ -97,19 +102,15 @@ class MovieServiceTest {
 
         verify(movieRepository, times(1)).deleteById(1L);
     }
+
     @Test
     void shouldUpdateMovie() {
-        Movie updated = new Movie();
-        updated.setTitle("Inception 2");
-        updated.setDescription("Sequel");
-        updated.setGenre("Sci-Fi");
-        updated.setDuration(160);
-        updated.setAvailableSeats(80);
+        MovieDTO updated = new MovieDTO(1L, "Inception 2", "Sequel", "Sci-Fi", 160, null, 80, null);
 
         when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
-        when(movieRepository.save(any(Movie.class))).thenReturn(updated);
+        when(movieRepository.save(any(Movie.class))).thenReturn(movie);
 
-        Movie result = movieService.updateMovie(1L, updated);
+        MovieDTO result = movieService.updateMovie(1L, updated);
 
         assertNotNull(result);
         assertEquals("Inception 2", result.getTitle());
@@ -120,7 +121,7 @@ class MovieServiceTest {
     void shouldSearchMoviesByGenre() {
         when(movieRepository.findByGenre("Sci-Fi")).thenReturn(Arrays.asList(movie));
 
-        List<Movie> result = movieRepository.findByGenre("Sci-Fi");
+        List<MovieDTO> result = movieService.getByGenre("Sci-Fi");
 
         assertEquals(1, result.size());
         assertEquals("Sci-Fi", result.get(0).getGenre());

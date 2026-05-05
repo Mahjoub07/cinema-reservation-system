@@ -1,8 +1,7 @@
 package com.cinema.controller;
 
-import com.cinema.model.Booking;
-import com.cinema.model.Movie;
-import com.cinema.model.User;
+import com.cinema.dto.BookingDTO;
+import com.cinema.dto.BookingRequestDTO;
 import com.cinema.service.BookingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,53 +26,37 @@ class BookingControllerTest {
     @InjectMocks
     private BookingController bookingController;
 
-    private Booking booking;
-    private User user;
-    private Movie movie;
+    private BookingDTO bookingDTO;
+    private BookingRequestDTO bookingRequest;
 
     @BeforeEach
     void setUp() {
-        user = new User();
-        user.setId(1L);
-        user.setName("Mahjoub");
-        user.setEmail("mahjoub@cinema.com");
-
-        movie = new Movie();
-        movie.setId(1L);
-        movie.setTitle("Inception");
-        movie.setAvailableSeats(100);
-
-        booking = new Booking();
-        booking.setId(1L);
-        booking.setUser(user);
-        booking.setMovie(movie);
-        booking.setNumberOfSeats(2);
-        booking.setStatus("CONFIRMED");
-        booking.setBookingDate(LocalDateTime.now());
+        bookingDTO = new BookingDTO(1L, 1L, "mahjoub@cinema.com", 1L, "Inception", 2, LocalDateTime.now(), "CONFIRMED");
+        bookingRequest = new BookingRequestDTO(1L, 2);
     }
 
     @Test
     void shouldCreateBooking() {
-        when(bookingService.createBooking(1L, 1L, 2)).thenReturn(booking);
+        when(bookingService.createBooking(any(String.class), any(BookingRequestDTO.class))).thenReturn(bookingDTO);
 
-        Booking result = bookingController.createBooking(1L, 1L, 2).getBody();
+        BookingDTO result = bookingController.createBooking(bookingRequest, null).getBody();
 
         assertNotNull(result);
         assertEquals("CONFIRMED", result.getStatus());
         assertEquals(2, result.getNumberOfSeats());
-        verify(bookingService, times(1)).createBooking(1L, 1L, 2);
+        verify(bookingService, times(1)).createBooking(any(String.class), any(BookingRequestDTO.class));
     }
 
     @Test
     void shouldGetUserBookings() {
-        when(bookingService.getUserBookings(1L)).thenReturn(Arrays.asList(booking));
+        when(bookingService.getUserBookingsByUserId(1L)).thenReturn(Arrays.asList(bookingDTO));
 
-        List<Booking> result = bookingController.getUserBookings(1L).getBody();
+        List<BookingDTO> result = bookingController.getUserBookings(1L).getBody();
 
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("CONFIRMED", result.get(0).getStatus());
-        verify(bookingService, times(1)).getUserBookings(1L);
+        verify(bookingService, times(1)).getUserBookingsByUserId(1L);
     }
 
     @Test

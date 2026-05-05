@@ -1,0 +1,8 @@
+.header { background: #000; border-bottom: 1px solid #333; padding: 15px 0; }
+.header-container { max-width: 1400px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+.logo h1 { color: #e50914; font-size: 1.5rem; }
+.nav { display: flex; gap: 20px; align-items: center; }
+.nav-link { color: #fff; text-decoration: none; transition: color 0.3s; }
+.nav-link:hover { color: #e50914; }
+.logout-button { background: #e50914; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; }
+.logout-button:hover { background: #b20710; }

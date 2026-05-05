@@ -27,9 +27,19 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Public endpoints
                 .requestMatchers("/api/users/register", "/api/users/login").permitAll()
                 .requestMatchers("/api/movies").permitAll()
                 .requestMatchers("/api/movies/**").permitAll()
+                // User endpoints (require authentication)
+                .requestMatchers("/api/bookings/my-bookings").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/bookings").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/api/bookings/*/cancel").hasAnyRole("USER", "ADMIN")
+                // Admin endpoints
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/users").hasRole("ADMIN")
+                .requestMatchers("/api/users/**").hasRole("ADMIN")
+                .requestMatchers("/api/bookings/user/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

@@ -1,5 +1,9 @@
 package com.cinema.service;
 
+import com.cinema.dto.BookingDTO;
+import com.cinema.dto.BookingRequestDTO;
+import com.cinema.exception.BadRequestException;
+import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.model.Booking;
 import com.cinema.model.Movie;
 import com.cinema.model.User;
@@ -36,6 +40,7 @@ class BookingServiceTest {
     private User user;
     private Movie movie;
     private Booking booking;
+    private BookingRequestDTO bookingRequest;
 
     @BeforeEach
     void setUp() {
@@ -55,27 +60,30 @@ class BookingServiceTest {
         booking.setMovie(movie);
         booking.setNumberOfSeats(2);
         booking.setStatus("CONFIRMED");
+
+        bookingRequest = new BookingRequestDTO(1L, 2);
     }
 
     @Test
     void shouldCreateBookingSuccessfully() {
         when(movieService.getMovieById(1L)).thenReturn(movie);
-        when(userService.findAll()).thenReturn(Arrays.asList(user));
+        when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
         when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
 
-        Booking result = bookingService.createBooking(1L, 1L, 2);
+        BookingDTO result = bookingService.createBooking("mahjoub@cinema.com", bookingRequest);
 
         assertNotNull(result);
         assertEquals("CONFIRMED", result.getStatus());
         assertEquals(2, result.getNumberOfSeats());
     }
+
     @Test
     void shouldThrowExceptionWhenNotEnoughSeats() {
         movie.setAvailableSeats(1);
         when(movieService.getMovieById(1L)).thenReturn(movie);
 
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> bookingService.createBooking(1L, 1L, 5));
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> bookingService.createBooking("mahjoub@cinema.com", bookingRequest));
 
         assertEquals("Not enough seats available", exception.getMessage());
     }
@@ -84,7 +92,7 @@ class BookingServiceTest {
     void shouldGetUserBookings() {
         when(bookingRepository.findByUserId(1L)).thenReturn(Arrays.asList(booking));
 
-        List<Booking> result = bookingService.getUserBookings(1L);
+        List<BookingDTO> result = bookingService.getUserBookings("mahjoub@cinema.com");
 
         assertEquals(1, result.size());
         assertEquals("CONFIRMED", result.get(0).getStatus());
@@ -93,7 +101,7 @@ class BookingServiceTest {
     @Test
     void shouldCancelBooking() {
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
-        when(movieService.addMovie(any(Movie.class))).thenReturn(movie);
+        when(movieService.updateMovie(any(Long.class), any())).thenReturn(null);
         when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
 
         bookingService.cancelBooking(1L);
@@ -106,7 +114,7 @@ class BookingServiceTest {
     void shouldThrowExceptionWhenBookingNotFound() {
         when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
 
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
                 () -> bookingService.cancelBooking(99L));
 
         assertEquals("Booking not found", exception.getMessage());
