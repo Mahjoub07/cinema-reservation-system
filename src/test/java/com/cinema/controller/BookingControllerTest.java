@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -37,14 +38,20 @@ class BookingControllerTest {
 
     @Test
     void shouldCreateBooking() {
-        when(bookingService.createBooking(any(String.class), any(BookingRequestDTO.class))).thenReturn(bookingDTO);
+        // Create mock Authentication object
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("mahjoub@cinema.com");
 
-        BookingDTO result = bookingController.createBooking(bookingRequest, null).getBody();
+        when(bookingService.createBooking(any(String.class), any(BookingRequestDTO.class)))
+                .thenReturn(bookingDTO);
+
+        // Pass the mock authentication instead of null
+        BookingDTO result = bookingController.createBooking(bookingRequest, authentication).getBody();
 
         assertNotNull(result);
         assertEquals("CONFIRMED", result.getStatus());
         assertEquals(2, result.getNumberOfSeats());
-        verify(bookingService, times(1)).createBooking(any(String.class), any(BookingRequestDTO.class));
+        verify(bookingService, times(1)).createBooking(eq("mahjoub@cinema.com"), any(BookingRequestDTO.class));
     }
 
     @Test
