@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -23,12 +24,22 @@ public class BookingController {
     public ResponseEntity<BookingDTO> createBooking(
             @Valid @RequestBody BookingRequestDTO request,
             Authentication authentication) {
+
+        if (authentication == null) {
+            throw new RuntimeException("Authentication required");
+        }
+
         String email = authentication.getName();
         return ResponseEntity.ok(bookingService.createBooking(email, request));
     }
 
     @GetMapping("/my-bookings")
     public ResponseEntity<List<BookingDTO>> getMyBookings(Authentication authentication) {
+
+        if (authentication == null) {
+            throw new RuntimeException("Authentication required");
+        }
+
         String email = authentication.getName();
         return ResponseEntity.ok(bookingService.getUserBookings(email));
     }
@@ -39,7 +50,7 @@ public class BookingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingDTO>> getAllBookings(Authentication authentication) {
+    public ResponseEntity<List<BookingDTO>> getAllBookings() {
         return ResponseEntity.ok(bookingService.getAllBookings());
     }
 
