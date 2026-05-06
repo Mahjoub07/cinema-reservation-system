@@ -1,6 +1,8 @@
 package com.cinema.controller;
 
-import com.cinema.model.User;
+import com.cinema.dto.LoginRequestDTO;
+import com.cinema.dto.RegisterRequestDTO;
+import com.cinema.dto.UserDTO;
 import com.cinema.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,37 +27,31 @@ class UserControllerTest {
     @InjectMocks
     private UserController userController;
 
-    private User user;
+    private UserDTO userDTO;
+    private RegisterRequestDTO registerRequest;
+    private LoginRequestDTO loginRequest;
 
     @BeforeEach
     void setUp() {
-        user = new User();
-        user.setId(1L);
-        user.setName("Mahjoub");
-        user.setEmail("mahjoub@cinema.com");
-        user.setPassword("password123");
-        user.setRole("ROLE_USER");
+        userDTO = new UserDTO(1L, "mahjoub@cinema.com", "Mahjoub", "ROLE_USER");
+        registerRequest = new RegisterRequestDTO("Mahjoub", "mahjoub@cinema.com", "password123");
+        loginRequest = new LoginRequestDTO("mahjoub@cinema.com", "password123");
     }
 
     @Test
     void shouldRegisterUser() {
-        when(userService.register(any(User.class))).thenReturn(user);
+        when(userService.register(any(RegisterRequestDTO.class))).thenReturn(userDTO);
 
-        User result = userController.register(user).getBody();
+        UserDTO result = userController.register(registerRequest).getBody();
 
         assertNotNull(result);
         assertEquals("mahjoub@cinema.com", result.getEmail());
-        verify(userService, times(1)).register(user);
+        verify(userService, times(1)).register(registerRequest);
     }
 
     @Test
     void shouldLoginUser() {
         when(userService.login(any(), any())).thenReturn("jwt-token");
-
-        Map<String, String> loginRequest = Map.of(
-                "email", "mahjoub@cinema.com",
-                "password", "password123"
-        );
 
         Map<String, String> result = userController.login(loginRequest).getBody();
 
@@ -65,9 +61,9 @@ class UserControllerTest {
 
     @Test
     void shouldGetAllUsers() {
-        when(userService.findAll()).thenReturn(Arrays.asList(user));
+        when(userService.findAll()).thenReturn(Arrays.asList(userDTO));
 
-        List<User> result = userController.getAllUsers().getBody();
+        List<UserDTO> result = userController.getAllUsers().getBody();
 
         assertNotNull(result);
         assertEquals(1, result.size());

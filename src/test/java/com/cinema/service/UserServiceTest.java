@@ -1,5 +1,9 @@
 package com.cinema.service;
 
+import com.cinema.dto.RegisterRequestDTO;
+import com.cinema.dto.UserDTO;
+import com.cinema.exception.BadRequestException;
+import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.model.User;
 import com.cinema.repository.UserRepository;
 import com.cinema.security.JwtUtil;
@@ -32,6 +36,8 @@ class UserServiceTest {
     private UserService userService;
 
     private User user;
+    private UserDTO userDTO;
+    private RegisterRequestDTO registerRequest;
 
     @BeforeEach
     void setUp() {
@@ -41,6 +47,9 @@ class UserServiceTest {
         user.setEmail("mahjoub@cinema.com");
         user.setPassword("password123");
         user.setRole("ROLE_USER");
+
+        userDTO = new UserDTO(1L, "mahjoub@cinema.com", "Mahjoub", "ROLE_USER");
+        registerRequest = new RegisterRequestDTO("Mahjoub", "mahjoub@cinema.com", "password123");
     }
 
     @Test
@@ -49,19 +58,19 @@ class UserServiceTest {
         when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        User result = userService.register(user);
+        UserDTO result = userService.register(registerRequest);
 
         assertNotNull(result);
         assertEquals("mahjoub@cinema.com", result.getEmail());
-        verify(userRepository, times(1)).save(user);
+        verify(userRepository, times(1)).save(any(User.class));
     }
 
     @Test
     void shouldThrowExceptionWhenEmailAlreadyExists() {
         when(userRepository.existsByEmail(user.getEmail())).thenReturn(true);
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> userService.register(user));
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> userService.register(registerRequest));
 
         assertEquals("Email already in use", exception.getMessage());
         verify(userRepository, never()).save(any());
@@ -72,7 +81,7 @@ class UserServiceTest {
         user.setPassword("encodedPassword");
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(any(), any())).thenReturn(true);
-        when(jwtUtil.generateToken(user.getEmail())).thenReturn("jwt-token");
+        when(jwtUtil.generateToken(user.getEmail(), user.getRole())).thenReturn("jwt-token");
 
         String token = userService.login("mahjoub@cinema.com", "password123");
 
@@ -86,7 +95,7 @@ class UserServiceTest {
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(any(), any())).thenReturn(false);
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        BadRequestException exception = assertThrows(BadRequestException.class,
                 () -> userService.login("mahjoub@cinema.com", "wrongpassword"));
 
         assertEquals("Invalid password", exception.getMessage());

@@ -1,7 +1,8 @@
 package com.cinema.controller;
 
-import com.cinema.model.Movie;
+import com.cinema.dto.MovieDTO;
 import com.cinema.service.MovieService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -17,29 +18,34 @@ public class MovieController {
     }
 
     @PostMapping
-    public ResponseEntity<Movie> addMovie(@RequestBody Movie movie) {
-        return ResponseEntity.ok(movieService.addMovie(movie));
+    public ResponseEntity<MovieDTO> addMovie(@Valid @RequestBody MovieDTO movieDTO) {
+        return ResponseEntity.ok(movieService.addMovie(movieDTO));
     }
 
     @GetMapping
-    public ResponseEntity<List<Movie>> getAllMovies() {
+    public ResponseEntity<List<MovieDTO>> getAllMovies() {
         return ResponseEntity.ok(movieService.getAllMovies());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Movie> getMovieById(@PathVariable Long id) {
-        return ResponseEntity.ok(movieService.getMovieById(id));
+    public ResponseEntity<MovieDTO> getMovieById(@PathVariable Long id) {
+        return ResponseEntity.ok(movieService.getMovieDTOById(id));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Movie>> searchMovies(@RequestParam String title) {
+    public ResponseEntity<List<MovieDTO>> searchMovies(@RequestParam String title) {
         return ResponseEntity.ok(movieService.searchByTitle(title));
     }
 
+    @GetMapping("/genre/{genre}")
+    public ResponseEntity<List<MovieDTO>> getMoviesByGenre(@PathVariable String genre) {
+        return ResponseEntity.ok(movieService.getByGenre(genre));
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<Movie> updateMovie(@PathVariable Long id,
-                                              @RequestBody Movie movie) {
-        return ResponseEntity.ok(movieService.updateMovie(id, movie));
+    public ResponseEntity<MovieDTO> updateMovie(@PathVariable Long id,
+                                              @Valid @RequestBody MovieDTO movieDTO) {
+        return ResponseEntity.ok(movieService.updateMovie(id, movieDTO));
     }
 
     @DeleteMapping("/{id}")

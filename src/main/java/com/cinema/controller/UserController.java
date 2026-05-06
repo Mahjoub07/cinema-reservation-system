@@ -1,7 +1,10 @@
 package com.cinema.controller;
 
-import com.cinema.model.User;
+import com.cinema.dto.LoginRequestDTO;
+import com.cinema.dto.RegisterRequestDTO;
+import com.cinema.dto.UserDTO;
 import com.cinema.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,22 +22,24 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody User user) {
-        return ResponseEntity.ok(userService.register(user));
+    public ResponseEntity<UserDTO> register(@Valid @RequestBody RegisterRequestDTO request) {
+        return ResponseEntity.ok(userService.register(request));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> request) {
-        String token = userService.login(
-                request.get("email"),
-                request.get("password")
-        );
+    public ResponseEntity<Map<String, String>> login(@Valid @RequestBody LoginRequestDTO request) {
+        String token = userService.login(request.getEmail(), request.getPassword());
         return ResponseEntity.ok(Map.of("token", token));
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
         return ResponseEntity.ok(userService.findAll());
+    }
+
+    @PutMapping("/{id}/role")
+    public ResponseEntity<UserDTO> updateUserRole(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        return ResponseEntity.ok(userService.updateUserRole(id, request.get("role")));
     }
 
     @DeleteMapping("/{id}")

@@ -1,6 +1,6 @@
 package com.cinema.controller;
 
-import com.cinema.model.Movie;
+import com.cinema.dto.MovieDTO;
 import com.cinema.service.MovieService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,23 +25,18 @@ class MovieControllerTest {
     @InjectMocks
     private MovieController movieController;
 
-    private Movie movie;
+    private MovieDTO movieDTO;
 
     @BeforeEach
     void setUp() {
-        movie = new Movie();
-        movie.setId(1L);
-        movie.setTitle("Inception");
-        movie.setGenre("Sci-Fi");
-        movie.setDuration(148);
-        movie.setAvailableSeats(100);
+        movieDTO = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, null, 100, null);
     }
 
     @Test
     void shouldGetAllMovies() {
-        when(movieService.getAllMovies()).thenReturn(Arrays.asList(movie));
+        when(movieService.getAllMovies()).thenReturn(Arrays.asList(movieDTO));
 
-        List<Movie> result = movieController.getAllMovies().getBody();
+        List<MovieDTO> result = movieController.getAllMovies().getBody();
 
         assertNotNull(result);
         assertEquals(1, result.size());
@@ -50,9 +45,9 @@ class MovieControllerTest {
 
     @Test
     void shouldGetMovieById() {
-        when(movieService.getMovieById(1L)).thenReturn(movie);
+        when(movieService.getMovieDTOById(1L)).thenReturn(movieDTO);
 
-        Movie result = movieController.getMovieById(1L).getBody();
+        MovieDTO result = movieController.getMovieById(1L).getBody();
 
         assertNotNull(result);
         assertEquals("Inception", result.getTitle());
@@ -60,13 +55,13 @@ class MovieControllerTest {
 
     @Test
     void shouldAddMovie() {
-        when(movieService.addMovie(any(Movie.class))).thenReturn(movie);
+        when(movieService.addMovie(any(MovieDTO.class))).thenReturn(movieDTO);
 
-        Movie result = movieController.addMovie(movie).getBody();
+        MovieDTO result = movieController.addMovie(movieDTO).getBody();
 
         assertNotNull(result);
         assertEquals("Inception", result.getTitle());
-        verify(movieService, times(1)).addMovie(movie);
+        verify(movieService, times(1)).addMovie(movieDTO);
     }
 
     @Test
@@ -80,9 +75,9 @@ class MovieControllerTest {
 
     @Test
     void shouldSearchMovies() {
-        when(movieService.searchByTitle("inc")).thenReturn(Arrays.asList(movie));
+        when(movieService.searchByTitle("inc")).thenReturn(Arrays.asList(movieDTO));
 
-        List<Movie> result = movieController.searchMovies("inc").getBody();
+        List<MovieDTO> result = movieController.searchMovies("inc").getBody();
 
         assertNotNull(result);
         assertEquals(1, result.size());
