@@ -24,24 +24,30 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
+
             .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/api/users/register", "/api/users/login").permitAll()
-                .requestMatchers("/api/movies").permitAll()
-                .requestMatchers("/api/movies/**").permitAll()
-                // User endpoints (require authentication)
-                .requestMatchers("/api/bookings/my-bookings").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/api/bookings").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/api/bookings/*/cancel").hasAnyRole("USER", "ADMIN")
-                // Admin endpoints
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/users").hasRole("ADMIN")
-                .requestMatchers("/api/users/**").hasRole("ADMIN")
-                .requestMatchers("/api/bookings/user/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
+
+            .authorizeHttpRequests(auth -> auth
+
+                // ✅ FRONTEND + ROOT ACCESS
+                .requestMatchers("/", "/index.html", "/**").permitAll()
+
+                // ✅ PUBLIC API
+                .requestMatchers("/api/users/register", "/api/users/login").permitAll()
+                .requestMatchers("/api/movies/**").permitAll()
+
+                // 🔐 PROTECTED ROUTES (JWT still applies if used later)
+                .requestMatchers("/api/bookings/**").authenticated()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/users/**").hasRole("ADMIN")
+
+                // fallback
+                .anyRequest().permitAll()
+            )
+
+            // keep JWT filter (important for later)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
