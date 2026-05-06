@@ -81,8 +81,9 @@ class BookingServiceTest {
     void shouldThrowExceptionWhenNotEnoughSeats() {
         movie.setAvailableSeats(1);
         when(movieService.getMovieById(1L)).thenReturn(movie);
+        when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
 
-        BadRequestException exception = assertThrows(BadRequestException.class,
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> bookingService.createBooking("mahjoub@cinema.com", bookingRequest));
 
         assertEquals("Not enough seats available", exception.getMessage());
@@ -90,7 +91,8 @@ class BookingServiceTest {
 
     @Test
     void shouldGetUserBookings() {
-        when(bookingRepository.findByUserId(1L)).thenReturn(Arrays.asList(booking));
+        when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
+        when(bookingRepository.findByUserIdWithDetails(1L)).thenReturn(Arrays.asList(booking));
 
         List<BookingDTO> result = bookingService.getUserBookings("mahjoub@cinema.com");
 
@@ -101,7 +103,7 @@ class BookingServiceTest {
     @Test
     void shouldCancelBooking() {
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
-        when(movieService.updateMovie(any(Long.class), any())).thenReturn(null);
+        doNothing().when(movieService).updateMovieSeats(any(Movie.class));
         when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
 
         bookingService.cancelBooking(1L);

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getMovieById } from '../api/movies';
 import { useAuth } from '../context/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/MovieDetails.css';
 
 const MovieDetails = () => {
@@ -37,7 +38,7 @@ const MovieDetails = () => {
   };
 
   if (loading) {
-    return <div className="loading-spinner">Loading...</div>;
+    return <LoadingSpinner text="Loading movie details..." />;
   }
 
   if (error) {

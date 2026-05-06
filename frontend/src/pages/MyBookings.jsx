@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getMyBookings, cancelBooking } from '../api/bookings';
+import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/MyBookings.css';
 
 const MyBookings = () => {
@@ -45,7 +46,7 @@ const MyBookings = () => {
   };
 
   if (loading) {
-    return <div className="loading-spinner">Loading...</div>;
+    return <LoadingSpinner text="Loading your bookings..." />;
   }
 
   if (error) {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getAllMovies, addMovie, updateMovie, deleteMovie } from '../api/movies';
 import { getAllBookingsAdmin, getDashboardStats, getAllUsers, updateUserRole, deleteUser } from '../api/admin';
+import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/Admin.css';
 
 const Admin = () => {
@@ -161,7 +162,7 @@ const Admin = () => {
       {error && <div className="error-message">{error}</div>}
 
       {loading ? (
-        <div className="loading-spinner">Loading...</div>
+        <LoadingSpinner text="Loading admin data..." />
       ) : (
         <>
           {activeTab === 'dashboard' && (

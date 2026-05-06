@@ -1,9 +1,101 @@
-.bookings-container h1 { color: #e50914; margin-bottom: 30px; }
-.booking-card { background: #141414; padding: 25px; border-radius: 8px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-.booking-card.cancelled { opacity: 0.5; }
-.booking-info h3 { color: #fff; margin-bottom: 10px; }
-.booking-info p { color: #999; margin-bottom: 5px; }
-.status.confirmed { color: #46d369; }
-.status.cancelled { color: #e50914; }
-.cancel-button { background: #e50914; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; }
-.cancel-button:hover { background: #b20710; }
+.bookings-container {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bookings-container h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 32px;
+  letter-spacing: -0.5px;
+}
+
+.bookings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.booking-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  padding: 24px 28px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.booking-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(4px);
+}
+
+.booking-card.cancelled {
+  opacity: 0.5;
+}
+
+.booking-info h3 {
+  color: #fff;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.booking-info p {
+  color: #888;
+  margin-bottom: 5px;
+  font-size: 0.88rem;
+}
+
+.status {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+}
+
+.status.confirmed {
+  background: rgba(70, 211, 105, 0.15);
+  color: #46d369;
+}
+
+.status.cancelled {
+  background: rgba(229, 9, 20, 0.15);
+  color: #ff6b6b;
+}
+
+.cancel-button {
+  background: linear-gradient(135deg, #e50914, #b20710);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(229, 9, 20, 0.3);
+  white-space: nowrap;
+}
+
+.cancel-button:hover {
+  background: linear-gradient(135deg, #ff1a25, #e50914);
+  box-shadow: 0 4px 16px rgba(229, 9, 20, 0.4);
+}
+
+@media (max-width: 640px) {
+  .booking-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}

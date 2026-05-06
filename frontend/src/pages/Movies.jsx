@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllMovies, searchMovies, getMoviesByGenre } from '../api/movies';
 import { useAuth } from '../context/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/Movies.css';
 
 const Movies = () => {
@@ -91,7 +92,7 @@ const Movies = () => {
   };
 
   if (loading) {
-    return <div className="loading-spinner">Loading...</div>;
+    return <LoadingSpinner text="Loading movies..." />;
   }
 
   if (error) {
@@ -99,12 +100,23 @@ const Movies = () => {
   }
 
   if (movies.length === 0) {
-    return <div className="empty-state">No movies found</div>;
+    return (
+      <div className="movies-container">
+        <div className="movies-hero">
+          <h1>Now Showing</h1>
+          <p>Discover and book your favorite movies</p>
+        </div>
+        <div className="empty-state">No movies found</div>
+      </div>
+    );
   }
 
   return (
     <div className="movies-container">
-      <h1>Now Showing</h1>
+      <div className="movies-hero">
+        <h1>Now Showing</h1>
+        <p>Discover and book your favorite movies</p>
+      </div>
       <div className="movies-filters">
         <input
           type="text"
