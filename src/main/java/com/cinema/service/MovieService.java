@@ -66,6 +66,10 @@ public class MovieService {
         movieRepository.deleteById(id);
     }
 
+    public void updateMovieSeats(Movie movie) {
+        movieRepository.save(movie);
+    }
+
     private MovieDTO convertToDTO(Movie movie) {
         return new MovieDTO(
             movie.getId(),
