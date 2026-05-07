@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import '../styles/Auth.css';
 
 const Register = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', adminCode: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
@@ -63,10 +63,6 @@ const Register = () => {
           <div className="form-group">
             <label>Password</label>
             <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Enter your password" disabled={loading} />
-          </div>
-          <div className="form-group">
-            <label>Admin Code (Optional)</label>
-            <input type="text" name="adminCode" value={formData.adminCode} onChange={handleChange} placeholder="Enter admin code to register as admin" disabled={loading} />
           </div>
           <button type="submit" className="auth-button" disabled={loading}>
             {loading ? 'Registering...' : 'Register'}

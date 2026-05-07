@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { getAllMovies, addMovie, updateMovie, deleteMovie } from '../api/movies';
-import { getAllBookingsAdmin, getDashboardStats, getAllUsers, updateUserRole, deleteUser } from '../api/admin';
+import { getAllBookingsAdmin, getDashboardStats, getAllUsers, updateUserRole, deleteUser, createAdmin } from '../api/admin';
 import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/Admin.css';
 
@@ -23,6 +24,8 @@ const Admin = () => {
     showTime: '',
     availableSeats: ''
   });
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminFormData, setAdminFormData] = useState({ name: '', email: '', password: '' });
 
   const genres = [
     'Action', 'Adventure', 'Animation', 'Comedy', 'Crime',
@@ -31,6 +34,7 @@ const Admin = () => {
   ];
 
   const { user } = useAuth();
+  const { addToast } = useToast();
 
   useEffect(() => {
     if (user?.role !== 'ROLE_ADMIN') return;
@@ -134,6 +138,27 @@ const Admin = () => {
       setUsers(users.filter(u => u.id !== userId));
     } catch (err) {
       setError('Failed to delete user');
+    }
+  };
+
+  const handleAddAdmin = () => {
+    setAdminFormData({ name: '', email: '', password: '' });
+    setShowAdminModal(true);
+  };
+
+  const handleAdminFormChange = (e) => {
+    setAdminFormData({ ...adminFormData, [e.target.name]: e.target.value });
+  };
+
+  const handleAdminSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const newAdmin = await createAdmin(adminFormData);
+      setUsers([...users, newAdmin]);
+      setShowAdminModal(false);
+      addToast('Admin created successfully', 'success');
+    } catch (err) {
+      addToast(err.response?.data?.message || 'Failed to create admin', 'error');
     }
   };
 
@@ -256,6 +281,7 @@ const Admin = () => {
 
           {activeTab === 'users' && (
             <div className="admin-section">
+              <button className="add-button" onClick={handleAddAdmin}>Add Admin</button>
               <div className="admin-table">
                 <table>
                   <thead>
@@ -296,6 +322,34 @@ const Admin = () => {
             </div>
           )}
         </>
+      )}
+
+      {showAdminModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>Add Admin</h2>
+            <form onSubmit={handleAdminSubmit}>
+              <div className="form-group">
+                <label>Name</label>
+                <input type="text" name="name" value={adminFormData.name} onChange={handleAdminFormChange} required />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input type="email" name="email" value={adminFormData.email} onChange={handleAdminFormChange} required />
+              </div>
+              <div className="form-group">
+                <label>Password</label>
+                <input type="password" name="password" value={adminFormData.password} onChange={handleAdminFormChange} required minLength={6} />
+              </div>
+              <div className="modal-buttons">
+                <button type="submit" className="submit-button">Create Admin</button>
+                <button type="button" className="cancel-button" onClick={() => setShowAdminModal(false)}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {showModal && (

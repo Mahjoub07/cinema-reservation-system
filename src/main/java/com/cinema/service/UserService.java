@@ -7,7 +7,6 @@ import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.model.User;
 import com.cinema.repository.UserRepository;
 import com.cinema.security.JwtUtil;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,9 +20,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-
-    @Value("${admin.secret.code}")
-    private String adminSecretCode;
 
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
@@ -42,13 +38,22 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setName(request.getName());
+        user.setRole("ROLE_USER");
 
-        // Check if admin code is provided and correct
-        if (request.getAdminCode() != null && request.getAdminCode().equals(adminSecretCode)) {
-            user.setRole("ROLE_ADMIN");
-        } else {
-            user.setRole("ROLE_USER");
+        User savedUser = userRepository.save(user);
+        return convertToDTO(savedUser);
+    }
+
+    public UserDTO createAdmin(String name, String email, String password) {
+        if (userRepository.existsByEmail(email)) {
+            throw new BadRequestException("Email already in use");
         }
+
+        User user = new User();
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setName(name);
+        user.setRole("ROLE_ADMIN");
 
         User savedUser = userRepository.save(user);
         return convertToDTO(savedUser);
