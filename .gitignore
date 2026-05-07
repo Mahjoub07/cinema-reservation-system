@@ -33,3 +33,5 @@ build/
 .vscode/
 **/node_modules/
 *.timestamp-*.mjs
+frontend/dist/
+uploads/
