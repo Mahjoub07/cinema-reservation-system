@@ -32,4 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 **/node_modules/
-*.timestamp-*.mjs
+*.timestamp-*.mjsfrontend/dist
