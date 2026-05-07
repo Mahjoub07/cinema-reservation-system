@@ -24,3 +24,8 @@ export const deleteUser = async (userId) => {
   const response = await api.delete(`/users/${userId}`);
   return response.data;
 };
+
+export const createAdmin = async (adminData) => {
+  const response = await api.post('/admin/create-admin', adminData);
+  return response.data;
+};
