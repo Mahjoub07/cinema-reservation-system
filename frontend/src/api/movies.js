@@ -33,3 +33,14 @@ export const updateMovie = async (id, movieData) => {
 export const deleteMovie = async (id) => {
   await api.delete(`/movies/${id}`);
 };
+
+export const uploadPoster = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post('/movies/upload-poster', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};

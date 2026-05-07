@@ -32,7 +32,7 @@ class BookingControllerTest {
 
     @BeforeEach
     void setUp() {
-        bookingDTO = new BookingDTO(1L, 1L, "mahjoub@cinema.com", 1L, "Inception", 2, LocalDateTime.now(), "CONFIRMED");
+        bookingDTO = new BookingDTO(1L, 1L, "mahjoub@cinema.com", 1L, "Inception", 2, LocalDateTime.now(), "CONFIRMED", null);
         bookingRequest = new BookingRequestDTO(1L, 2);
     }
 
@@ -73,5 +73,25 @@ class BookingControllerTest {
         bookingController.cancelBooking(1L);
 
         verify(bookingService, times(1)).cancelBooking(1L);
+    }
+
+    @Test
+    void shouldDownloadTicketPdf() {
+        byte[] pdfBytes = new byte[]{1, 2, 3, 4, 5};
+        when(bookingService.generateTicketPdf(1L)).thenReturn(pdfBytes);
+
+        var response = bookingController.downloadTicket(1L);
+
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertArrayEquals(pdfBytes, response.getBody());
+    }
+
+    @Test
+    void shouldReturnErrorWhenDownloadTicketBookingNotFound() {
+        when(bookingService.generateTicketPdf(99L)).thenThrow(new RuntimeException("Booking not found"));
+
+        assertThrows(RuntimeException.class, () -> bookingController.downloadTicket(99L));
     }
 }
