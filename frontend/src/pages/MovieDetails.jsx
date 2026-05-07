@@ -53,12 +53,17 @@ const MovieDetails = () => {
     <div className="movie-details-container">
       <div className="movie-details-header">
         <div className="movie-poster-large">
-          <h1>{movie.title}</h1>
+          {movie.posterUrl ? (
+            <img src={movie.posterUrl} alt={movie.title} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }} />
+          ) : (
+            <h1>{movie.title}</h1>
+          )}
         </div>
         <div className="movie-details-info">
           <h1>{movie.title}</h1>
           <p className="movie-genre">{movie.genre || 'N/A'}</p>
           <p className="movie-duration">{movie.duration} minutes</p>
+          <p className="movie-price">Price: ${movie.price?.toFixed(2) || '0.00'}</p>
           <p className="movie-seats">{movie.availableSeats} seats available</p>
           {movie.showTime && (
             <p className="movie-time">

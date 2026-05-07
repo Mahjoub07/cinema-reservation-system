@@ -23,3 +23,17 @@ export const getAllBookings = async () => {
 export const cancelBooking = async (bookingId) => {
   await api.put(`/bookings/${bookingId}/cancel`);
 };
+
+export const downloadTicket = async (bookingId) => {
+  const response = await api.get(`/bookings/${bookingId}/ticket`, {
+    responseType: 'blob'
+  });
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `ticket-${bookingId}.pdf`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};

@@ -1,6 +1,7 @@
 package com.cinema.service;
 
 import com.cinema.dto.MovieDTO;
+import com.cinema.exception.BadRequestException;
 import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.model.Movie;
 import com.cinema.repository.MovieRepository;
@@ -39,7 +40,7 @@ class MovieServiceTest {
         movie.setDuration(148);
         movie.setAvailableSeats(100);
 
-        movieDTO = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, null, 100, null);
+        movieDTO = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, null, 100, null, null);
     }
 
     @Test
@@ -105,7 +106,7 @@ class MovieServiceTest {
 
     @Test
     void shouldUpdateMovie() {
-        MovieDTO updated = new MovieDTO(1L, "Inception 2", "Sequel", "Sci-Fi", 160, null, 80, null);
+        MovieDTO updated = new MovieDTO(1L, "Inception 2", "Sequel", "Sci-Fi", 160, null, 80, null, null);
 
         when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
         when(movieRepository.save(any(Movie.class))).thenReturn(movie);
@@ -125,5 +126,50 @@ class MovieServiceTest {
 
         assertEquals(1, result.size());
         assertEquals("Sci-Fi", result.get(0).getGenre());
+    }
+
+    @Test
+    void shouldUpdateMovieWithPriceAndPosterUrl() {
+        MovieDTO updated = new MovieDTO(1L, "Inception", "Updated", "Sci-Fi", 160, null, 80, "/uploads/poster.jpg", 15.0);
+
+        when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
+        when(movieRepository.save(any(Movie.class))).thenReturn(movie);
+
+        MovieDTO result = movieService.updateMovie(1L, updated);
+
+        assertNotNull(result);
+        assertEquals("Inception", result.getTitle());
+        assertEquals("Sci-Fi", result.getGenre());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUploadingNullFile() {
+        assertThrows(BadRequestException.class, () -> movieService.uploadPoster(null));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUploadingInvalidFileType() {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("application/pdf");
+
+        assertThrows(BadRequestException.class, () -> movieService.uploadPoster(file));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUploadingEmptyFile() {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(true);
+
+        assertThrows(BadRequestException.class, () -> movieService.uploadPoster(file));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUploadingFileWithNullContentType() {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn(null);
+
+        assertThrows(BadRequestException.class, () -> movieService.uploadPoster(file));
     }
 }

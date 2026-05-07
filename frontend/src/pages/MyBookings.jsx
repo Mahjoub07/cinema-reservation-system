@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getMyBookings, cancelBooking } from '../api/bookings';
+import { getMyBookings, cancelBooking, downloadTicket } from '../api/bookings';
 import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/MyBookings.css';
 
@@ -70,13 +70,21 @@ const MyBookings = () => {
               <p className={`status ${booking.status.toLowerCase()}`}>{booking.status}</p>
             </div>
             {booking.status === 'CONFIRMED' && (
-              <button
-                className="cancel-button"
-                onClick={() => handleCancel(booking.id)}
-                disabled={cancelling === booking.id}
-              >
-                {cancelling === booking.id ? 'Cancelling...' : 'Cancel Booking'}
-              </button>
+              <div className="booking-actions">
+                <button
+                  className="download-button"
+                  onClick={() => downloadTicket(booking.id)}
+                >
+                  Download Ticket
+                </button>
+                <button
+                  className="cancel-button"
+                  onClick={() => handleCancel(booking.id)}
+                  disabled={cancelling === booking.id}
+                >
+                  {cancelling === booking.id ? 'Cancelling...' : 'Cancel Booking'}
+                </button>
+              </div>
             )}
           </div>
         ))}

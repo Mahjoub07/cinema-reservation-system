@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { createBooking } from '../api/bookings';
+import { createBooking, downloadTicket } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Booking.css';
 
@@ -9,6 +9,7 @@ const Booking = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [bookingResult, setBookingResult] = useState(null);
   
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -40,11 +41,9 @@ const Booking = () => {
 
     setLoading(true);
     try {
-      await createBooking(movie.id, seats);
+      const result = await createBooking(movie.id, seats);
+      setBookingResult(result);
       setSuccess(true);
-      setTimeout(() => {
-        navigate('/my-bookings');
-      }, 2000);
     } catch (err) {
       setError(err.response?.data?.message || 'Booking failed');
     } finally {
@@ -58,7 +57,13 @@ const Booking = () => {
         <div className="success-message">
           <h2>Booking Confirmed!</h2>
           <p>Your tickets have been booked successfully.</p>
-          <p>Redirecting to your bookings...</p>
+          <p>Total Price: ${bookingResult?.totalPrice?.toFixed(2) || '0.00'}</p>
+          <button className="booking-button" onClick={() => downloadTicket(bookingResult.id)}>
+            Download Ticket (PDF)
+          </button>
+          <button className="cancel-button" onClick={() => navigate('/my-bookings')}>
+            View My Bookings
+          </button>
         </div>
       </div>
     );
@@ -73,6 +78,8 @@ const Booking = () => {
           <p>{movie.genre || 'N/A'}</p>
           <p>{movie.showTime ? new Date(movie.showTime).toLocaleString() : 'TBA'}</p>
           <p>Available seats: {movie.availableSeats}</p>
+          <p>Price: ${movie.price?.toFixed(2) || '0.00'}</p>
+          <p>Total: ${((movie.price || 0) * seats).toFixed(2)}</p>
         </div>
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>

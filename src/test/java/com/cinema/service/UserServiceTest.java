@@ -128,4 +128,32 @@ class UserServiceTest {
 
         verify(userRepository, times(1)).deleteById(1L);
     }
+
+    @Test
+    void shouldCreateAdminSuccessfully() {
+        when(userRepository.existsByEmail("admin@cinema.com")).thenReturn(false);
+        when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(2L);
+            return u;
+        });
+
+        UserDTO result = userService.createAdmin("Admin", "admin@cinema.com", "adminpass");
+
+        assertNotNull(result);
+        assertEquals("admin@cinema.com", result.getEmail());
+        assertEquals("ROLE_ADMIN", result.getRole());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAdminEmailAlreadyExists() {
+        when(userRepository.existsByEmail("admin@cinema.com")).thenReturn(true);
+
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> userService.createAdmin("Admin", "admin@cinema.com", "adminpass"));
+
+        assertEquals("Email already in use", exception.getMessage());
+        verify(userRepository, never()).save(any());
+    }
 }

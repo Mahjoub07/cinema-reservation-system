@@ -140,11 +140,16 @@ const Movies = () => {
         {movies.map((movie) => (
           <div key={movie.id} className="movie-card">
             <div className="movie-poster">
-              <h3>{movie.title}</h3>
+              {movie.posterUrl ? (
+                <img src={movie.posterUrl} alt={movie.title} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }} />
+              ) : (
+                <h3>{movie.title}</h3>
+              )}
             </div>
             <div className="movie-info">
               <p className="movie-genre">{movie.genre || 'N/A'}</p>
               <p className="movie-duration">{movie.duration} min</p>
+              <p className="movie-price">${movie.price?.toFixed(2) || '0.00'}</p>
               <p className="movie-seats">{movie.availableSeats} seats available</p>
               <p className="movie-time">
                 {movie.showTime ? new Date(movie.showTime).toLocaleString() : 'TBA'}

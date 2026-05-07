@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { getAllMovies, addMovie, updateMovie, deleteMovie } from '../api/movies';
+import { getAllMovies, addMovie, updateMovie, deleteMovie, uploadPoster } from '../api/movies';
 import { getAllBookingsAdmin, getDashboardStats, getAllUsers, updateUserRole, deleteUser, createAdmin } from '../api/admin';
 import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/Admin.css';
@@ -22,7 +22,9 @@ const Admin = () => {
     genre: '',
     duration: '',
     showTime: '',
-    availableSeats: ''
+    availableSeats: '',
+    price: '',
+    posterUrl: ''
   });
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminFormData, setAdminFormData] = useState({ name: '', email: '', password: '' });
@@ -72,7 +74,9 @@ const Admin = () => {
       genre: '',
       duration: '',
       showTime: '',
-      availableSeats: ''
+      availableSeats: '',
+      price: '',
+      posterUrl: ''
     });
     setShowModal(true);
   };
@@ -85,7 +89,9 @@ const Admin = () => {
       genre: movie.genre || '',
       duration: movie.duration,
       showTime: movie.showTime ? movie.showTime.slice(0, 16) : '',
-      availableSeats: movie.availableSeats
+      availableSeats: movie.availableSeats,
+      price: movie.price || '',
+      posterUrl: movie.posterUrl || ''
     });
     setShowModal(true);
   };
@@ -119,6 +125,18 @@ const Admin = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handlePosterUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const result = await uploadPoster(file);
+      setFormData({ ...formData, posterUrl: result.url });
+      addToast('Poster uploaded successfully', 'success');
+    } catch (err) {
+      addToast('Failed to upload poster', 'error');
+    }
   };
 
   const handleRoleChange = async (userId, newRole) => {
@@ -385,6 +403,15 @@ const Admin = () => {
               <div className="form-group">
                 <label>Available Seats</label>
                 <input type="number" name="availableSeats" value={formData.availableSeats} onChange={handleChange} required />
+              </div>
+              <div className="form-group">
+                <label>Price ($)</label>
+                <input type="number" name="price" value={formData.price} onChange={handleChange} step="0.01" min="0" />
+              </div>
+              <div className="form-group">
+                <label>Poster</label>
+                <input type="file" accept="image/*" onChange={handlePosterUpload} />
+                {formData.posterUrl && <p className="poster-preview">{formData.posterUrl}</p>}
               </div>
               <div className="modal-buttons">
                 <button type="submit" className="submit-button">

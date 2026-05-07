@@ -19,6 +19,8 @@ public class Movie {
     private int duration; 
     private LocalDateTime showTime;
     private int availableSeats;
+    private Double price;
+    private String posterUrl;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -35,4 +37,8 @@ public class Movie {
     public void setShowTime(LocalDateTime showTime) { this.showTime = showTime; }
     public int getAvailableSeats() { return availableSeats; }
     public void setAvailableSeats(int availableSeats) { this.availableSeats = availableSeats; }
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
+    public String getPosterUrl() { return posterUrl; }
+    public void setPosterUrl(String posterUrl) { this.posterUrl = posterUrl; }
 }

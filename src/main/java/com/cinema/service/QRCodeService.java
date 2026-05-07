@@ -17,10 +17,23 @@ public class QRCodeService {
     public String generateQRCode(Long bookingId, String userName,
                                   String movieTitle, int seats)
                                   throws WriterException, IOException {
+        return Base64.getEncoder().encodeToString(
+            buildQRCodeBytes(bookingId, userName, movieTitle, seats)
+        );
+    }
 
+    public byte[] generateQRCodeBytes(Long bookingId, String userName,
+                                       String movieTitle, int seats)
+                                       throws WriterException, IOException {
+        return buildQRCodeBytes(bookingId, userName, movieTitle, seats);
+    }
+
+    private byte[] buildQRCodeBytes(Long bookingId, String userName,
+                                     String movieTitle, int seats)
+                                     throws WriterException, IOException {
         String content = String.format(
-            "CINEMA BOOKING\nBooking ID: %d\nUser: %s\nMovie: %s\nSeats: %d",
-            bookingId, userName, movieTitle, seats
+            "https://mahjoub07.github.io/cinema-reservation-system/my-bookings#booking-%d",
+            bookingId
         );
 
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
@@ -31,6 +44,6 @@ public class QRCodeService {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
 
-        return Base64.getEncoder().encodeToString(outputStream.toByteArray());
+        return outputStream.toByteArray();
     }
 }

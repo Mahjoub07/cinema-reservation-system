@@ -53,6 +53,7 @@ class BookingServiceTest {
         movie.setId(1L);
         movie.setTitle("Inception");
         movie.setAvailableSeats(100);
+        movie.setPrice(12.50);
 
         booking = new Booking();
         booking.setId(1L);
@@ -60,6 +61,7 @@ class BookingServiceTest {
         booking.setMovie(movie);
         booking.setNumberOfSeats(2);
         booking.setStatus("CONFIRMED");
+        booking.setTotalPrice(25.0);
 
         bookingRequest = new BookingRequestDTO(1L, 2);
     }
@@ -75,6 +77,39 @@ class BookingServiceTest {
         assertNotNull(result);
         assertEquals("CONFIRMED", result.getStatus());
         assertEquals(2, result.getNumberOfSeats());
+    }
+
+    @Test
+    void shouldCalculateTotalPriceWhenCreatingBooking() {
+        when(movieService.getMovieById(1L)).thenReturn(movie);
+        when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
+            Booking b = inv.getArgument(0);
+            b.setId(1L);
+            return b;
+        });
+
+        BookingDTO result = bookingService.createBooking("mahjoub@cinema.com", bookingRequest);
+
+        assertNotNull(result);
+        assertEquals(25.0, result.getTotalPrice());
+    }
+
+    @Test
+    void shouldCalculateZeroPriceWhenMoviePriceIsNull() {
+        movie.setPrice(null);
+        when(movieService.getMovieById(1L)).thenReturn(movie);
+        when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
+            Booking b = inv.getArgument(0);
+            b.setId(1L);
+            return b;
+        });
+
+        BookingDTO result = bookingService.createBooking("mahjoub@cinema.com", bookingRequest);
+
+        assertNotNull(result);
+        assertEquals(0.0, result.getTotalPrice());
     }
 
     @Test
@@ -120,5 +155,101 @@ class BookingServiceTest {
                 () -> bookingService.cancelBooking(99L));
 
         assertEquals("Booking not found", exception.getMessage());
+    }
+
+    @Test
+    void shouldGetBookingById() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        Booking result = bookingService.getBookingById(1L);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenGetBookingByIdNotFound() {
+        when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> bookingService.getBookingById(99L));
+
+        assertEquals("Booking not found", exception.getMessage());
+    }
+
+    @Test
+    void shouldGenerateTicketPdf() throws Exception {
+        QRCodeService realQrService = new QRCodeService();
+        BookingService service = new BookingService(bookingRepository, movieService, userService, realQrService);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        byte[] pdf = service.generateTicketPdf(1L);
+
+        assertNotNull(pdf);
+        assertTrue(pdf.length > 0);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenGenerateTicketPdfBookingNotFound() throws Exception {
+        QRCodeService realQrService = new QRCodeService();
+        BookingService service = new BookingService(bookingRepository, movieService, userService, realQrService);
+        when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> service.generateTicketPdf(99L));
+
+        assertEquals("Booking not found", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUserNotFoundInCreateBooking() {
+        lenient().when(userService.findByEmail("unknown@cinema.com")).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> bookingService.createBooking("unknown@cinema.com", bookingRequest));
+
+        assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUserNotFoundInGetUserBookings() {
+        when(userService.findByEmail("unknown@cinema.com")).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
+                () -> bookingService.getUserBookings("unknown@cinema.com"));
+
+        assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    void shouldGetUserBookingsByUserId() {
+        when(bookingRepository.findByUserIdWithDetails(1L)).thenReturn(Arrays.asList(booking));
+
+        List<BookingDTO> result = bookingService.getUserBookingsByUserId(1L);
+
+        assertEquals(1, result.size());
+        assertEquals("CONFIRMED", result.get(0).getStatus());
+    }
+
+    @Test
+    void shouldGetAllBookings() {
+        when(bookingRepository.findAllWithDetails()).thenReturn(Arrays.asList(booking));
+
+        List<BookingDTO> result = bookingService.getAllBookings();
+
+        assertEquals(1, result.size());
+        assertEquals("CONFIRMED", result.get(0).getStatus());
+    }
+
+    @Test
+    void shouldCancelBookingAndRestoreSeats() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
+
+        bookingService.cancelBooking(1L);
+
+        verify(movieService, times(1)).updateMovieSeats(movie);
+        assertEquals("CANCELLED", booking.getStatus());
+        assertEquals(102, movie.getAvailableSeats()); // 100 + 2
     }
 }
