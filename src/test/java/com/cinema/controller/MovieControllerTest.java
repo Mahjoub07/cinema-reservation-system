@@ -29,7 +29,7 @@ class MovieControllerTest {
 
     @BeforeEach
     void setUp() {
-        movieDTO = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, null, 100, null);
+        movieDTO = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, null, 100, null, null);
     }
 
     @Test
@@ -82,5 +82,25 @@ class MovieControllerTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("Inception", result.get(0).getTitle());
+    }
+
+    @Test
+    void shouldUploadPoster() throws Exception {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(movieService.uploadPoster(file)).thenReturn("/uploads/posters/test.jpg");
+
+        var response = movieController.uploadPoster(file);
+
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals("/uploads/posters/test.jpg", response.getBody().get("url"));
+    }
+
+    @Test
+    void shouldReturnErrorWhenUploadPosterValidationFails() throws Exception {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(movieService.uploadPoster(file)).thenThrow(new RuntimeException("Invalid file type"));
+
+        assertThrows(RuntimeException.class, () -> movieController.uploadPoster(file));
     }
 }

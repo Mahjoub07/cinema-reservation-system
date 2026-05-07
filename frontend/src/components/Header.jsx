@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Header.css';
@@ -5,34 +6,64 @@ import '../styles/Header.css';
 const Header = () => {
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
+    setMobileMenuOpen(false);
     navigate('/login');
+  };
+
+  const closeMenu = () => setMobileMenuOpen(false);
+
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   return (
     <header className="header">
       <div className="header-container">
-        <Link to="/" className="logo">
-          <h1>Cinema Booking</h1>
+        <Link to="/" className="logo" onClick={closeMenu}>
+          <span className="logo-icon">&#127909;</span>
+          <h1>CineReserve</h1>
         </Link>
-        <nav className="nav">
+
+        <nav className={`nav ${mobileMenuOpen ? 'nav-open' : ''}`}>
           {user ? (
             <>
-              <Link to="/movies" className="nav-link">Movies</Link>
-              <Link to="/my-bookings" className="nav-link">My Bookings</Link>
-              {isAdmin() && <Link to="/admin" className="nav-link">Admin</Link>}
-              <button onClick={handleLogout} className="logout-button">Logout</button>
+              <Link to="/movies" className="nav-link" onClick={closeMenu}>Movies</Link>
+              <Link to="/my-bookings" className="nav-link" onClick={closeMenu}>My Bookings</Link>
+              {isAdmin() && <Link to="/admin" className="nav-link" onClick={closeMenu}>Admin</Link>}
+              <div className="nav-divider" />
+              <div className="user-pill">
+                <span className="user-avatar">{getInitials(user.email)}</span>
+                <span className="user-email">{user.email}</span>
+              </div>
+              <button onClick={handleLogout} className="logout-button">
+                <span>Logout</span>
+              </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="nav-link">Login</Link>
-              <Link to="/register" className="nav-link">Register</Link>
+              <Link to="/login" className="nav-link" onClick={closeMenu}>Login</Link>
+              <Link to="/register" className="nav-link btn-nav-primary" onClick={closeMenu}>Register</Link>
             </>
           )}
         </nav>
+
+        <button
+          className={`hamburger ${mobileMenuOpen ? 'open' : ''}`}
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle menu"
+          aria-expanded={mobileMenuOpen}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
       </div>
+      {mobileMenuOpen && <div className="nav-backdrop" onClick={closeMenu} />}
     </header>
   );
 };

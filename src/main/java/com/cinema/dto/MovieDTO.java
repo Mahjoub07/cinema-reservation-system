@@ -11,11 +11,12 @@ public class MovieDTO {
     private LocalDateTime showTime;
     private Integer availableSeats;
     private String posterUrl;
+    private Double price;
 
     public MovieDTO() {}
 
-    public MovieDTO(Long id, String title, String description, String genre, 
-                   Integer duration, LocalDateTime showTime, Integer availableSeats, String posterUrl) {
+    public MovieDTO(Long id, String title, String description, String genre,
+                   Integer duration, LocalDateTime showTime, Integer availableSeats, String posterUrl, Double price) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -24,6 +25,7 @@ public class MovieDTO {
         this.showTime = showTime;
         this.availableSeats = availableSeats;
         this.posterUrl = posterUrl;
+        this.price = price;
     }
 
     public Long getId() { return id; }
@@ -42,4 +44,6 @@ public class MovieDTO {
     public void setAvailableSeats(Integer availableSeats) { this.availableSeats = availableSeats; }
     public String getPosterUrl() { return posterUrl; }
     public void setPosterUrl(String posterUrl) { this.posterUrl = posterUrl; }
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
 }

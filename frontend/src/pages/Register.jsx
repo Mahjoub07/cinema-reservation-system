@@ -46,31 +46,74 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-box">
-        <h1>Cinema Booking</h1>
-        <h2>Register</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Name</label>
-            <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Enter your name" disabled={loading} />
+    <div className="auth-page">
+      <div className="auth-visual">
+        <div className="auth-visual-gradient" />
+        <div className="auth-visual-content">
+          <span className="auth-visual-icon">&#127909;</span>
+          <h2>CineReserve</h2>
+          <p>Join thousands of movie lovers. Create your account and start booking tickets today.</p>
+        </div>
+      </div>
+      <div className="auth-form-area">
+        <div className="auth-form-wrapper">
+          <div className="auth-form-header">
+            <h1>Create Account</h1>
+            <p>Sign up to start booking your favorite movies</p>
           </div>
-          <div className="form-group">
-            <label>Email</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Enter your email" disabled={loading} />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Enter your password" disabled={loading} />
-          </div>
-          <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? 'Registering...' : 'Register'}
-          </button>
-        </form>
-        <p className="auth-link">
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
+
+          {error && <div className="error-message">{error}</div>}
+
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="form-group floating">
+              <input
+                id="reg-name"
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder=" "
+                disabled={loading}
+                required
+              />
+              <label htmlFor="reg-name">Full Name</label>
+            </div>
+            <div className="form-group floating">
+              <input
+                id="reg-email"
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder=" "
+                disabled={loading}
+                required
+              />
+              <label htmlFor="reg-email">Email</label>
+            </div>
+            <div className="form-group floating">
+              <input
+                id="reg-password"
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder=" "
+                disabled={loading}
+                required
+                minLength={6}
+              />
+              <label htmlFor="reg-password">Password</label>
+            </div>
+            <button type="submit" className="btn btn-primary btn-lg auth-submit" disabled={loading}>
+              {loading ? 'Creating account...' : 'Create Account'}
+            </button>
+          </form>
+
+          <p className="auth-switch">
+            Already have an account? <Link to="/login">Sign In</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

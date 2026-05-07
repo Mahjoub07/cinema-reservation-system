@@ -11,11 +11,12 @@ public class BookingDTO {
     private Integer numberOfSeats;
     private LocalDateTime bookingDate;
     private String status;
+    private Double totalPrice;
 
     public BookingDTO() {}
 
-    public BookingDTO(Long id, Long userId, String userEmail, Long movieId, 
-                     String movieTitle, Integer numberOfSeats, LocalDateTime bookingDate, String status) {
+    public BookingDTO(Long id, Long userId, String userEmail, Long movieId,
+                     String movieTitle, Integer numberOfSeats, LocalDateTime bookingDate, String status, Double totalPrice) {
         this.id = id;
         this.userId = userId;
         this.userEmail = userEmail;
@@ -24,6 +25,7 @@ public class BookingDTO {
         this.numberOfSeats = numberOfSeats;
         this.bookingDate = bookingDate;
         this.status = status;
+        this.totalPrice = totalPrice;
     }
 
     public Long getId() { return id; }
@@ -42,4 +44,6 @@ public class BookingDTO {
     public void setBookingDate(LocalDateTime bookingDate) { this.bookingDate = bookingDate; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public Double getTotalPrice() { return totalPrice; }
+    public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }
 }
