@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import Header from './components/Header';
@@ -14,6 +14,27 @@ import Admin from './pages/Admin';
 import './styles/App.css';
 import './styles/Toast.css';
 
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <main className="main-content">
+      <div key={location.pathname} className="page-enter">
+        <Routes location={location}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<Movies />} />
+          <Route path="/movies" element={<Movies />} />
+          <Route path="/movie/:id" element={<MovieDetails />} />
+          <Route path="/booking/:id" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
+          <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
+        </Routes>
+      </div>
+    </main>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -21,18 +42,7 @@ function App() {
         <Router>
           <div className="app">
             <Header />
-            <main className="main-content">
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/" element={<Movies />} />
-                <Route path="/movies" element={<Movies />} />
-                <Route path="/movie/:id" element={<MovieDetails />} />
-                <Route path="/booking/:id" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
-                <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
-                <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
-              </Routes>
-            </main>
+            <AnimatedRoutes />
             <Footer />
           </div>
         </Router>

@@ -4,7 +4,16 @@ const Footer = () => {
   return (
     <footer className="footer">
       <div className="footer-container">
-        <p>&copy; 2026 <span>Cinema Booking</span>. All rights reserved.</p>
+        <div className="footer-brand">
+          <span className="footer-icon">&#127909;</span>
+          <span className="footer-name">CineReserve</span>
+        </div>
+        <p className="footer-copy">&copy; 2026 CineReserve. All rights reserved.</p>
+        <div className="footer-links">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="#">Support</a>
+        </div>
       </div>
     </footer>
   );

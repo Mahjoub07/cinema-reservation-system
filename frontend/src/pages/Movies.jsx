@@ -5,6 +5,18 @@ import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/Movies.css';
 
+const SkeletonCard = () => (
+  <div className="movie-card skeleton-card">
+    <div className="movie-poster skeleton" style={{ height: '220px' }} />
+    <div className="movie-info" style={{ gap: '12px', display: 'flex', flexDirection: 'column' }}>
+      <div className="skeleton" style={{ width: '60px', height: '20px', borderRadius: '20px' }} />
+      <div className="skeleton" style={{ width: '80%', height: '16px' }} />
+      <div className="skeleton" style={{ width: '50%', height: '14px' }} />
+      <div className="skeleton" style={{ width: '100%', height: '40px', borderRadius: '10px', marginTop: '8px' }} />
+    </div>
+  </div>
+);
+
 const Movies = () => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +57,7 @@ const Movies = () => {
 
   const fetchMovies = async () => {
     setLoading(true);
+    setError('');
     try {
       const data = await getAllMovies();
       setMovies(data);
@@ -57,6 +70,7 @@ const Movies = () => {
 
   const handleSearch = async (term) => {
     setLoading(true);
+    setError('');
     try {
       const data = await searchMovies(term);
       setMovies(data);
@@ -69,6 +83,7 @@ const Movies = () => {
 
   const handleGenreFilter = async (genre) => {
     setLoading(true);
+    setError('');
     try {
       const data = await getMoviesByGenre(genre);
       setMovies(data);
@@ -91,40 +106,67 @@ const Movies = () => {
     navigate(`/movie/${movie.id}`);
   };
 
-  if (loading) {
-    return <LoadingSpinner text="Loading movies..." />;
-  }
+  const heroMovie = movies.length > 0 ? movies[0] : null;
 
   if (error) {
-    return <div className="error-message">{error}</div>;
-  }
-
-  if (movies.length === 0) {
     return (
       <div className="movies-container">
         <div className="movies-hero">
           <h1>Now Showing</h1>
           <p>Discover and book your favorite movies</p>
         </div>
-        <div className="empty-state">No movies found</div>
+        <div className="error-message">{error}</div>
       </div>
     );
   }
 
   return (
     <div className="movies-container">
+      {heroMovie && !loading && !searchTerm && !selectedGenre && (
+        <div
+          className="hero-banner"
+          style={heroMovie.posterUrl ? { backgroundImage: `url(${heroMovie.posterUrl})` } : {}}
+        >
+          <div className="hero-gradient" />
+          <div className="hero-content">
+            <span className="hero-badge">Featured</span>
+            <h2 className="hero-title">{heroMovie.title}</h2>
+            <p className="hero-meta">
+              {heroMovie.genre} &middot; {heroMovie.duration} min &middot; ${heroMovie.price?.toFixed(2)}
+            </p>
+            <p className="hero-description">{heroMovie.description}</p>
+            <div className="hero-actions">
+              <button className="btn btn-primary btn-lg" onClick={() => handleBook(heroMovie)}>
+                <span>&#127909;</span> Book Now
+              </button>
+              <button className="btn btn-secondary btn-lg" onClick={() => handleViewDetails(heroMovie)}>
+                More Info
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="movies-hero">
         <h1>Now Showing</h1>
         <p>Discover and book your favorite movies</p>
       </div>
+
       <div className="movies-filters">
-        <input
-          type="text"
-          placeholder="Search movies..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-input"
-        />
+        <div className="search-wrapper">
+          <input
+            type="text"
+            placeholder="Search movies..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          {searchTerm && (
+            <button className="search-clear" onClick={() => setSearchTerm('')} aria-label="Clear search">
+              &#10005;
+            </button>
+          )}
+        </div>
         <select
           value={selectedGenre}
           onChange={(e) => setSelectedGenre(e.target.value)}
@@ -136,46 +178,73 @@ const Movies = () => {
           ))}
         </select>
       </div>
-      <div className="movies-grid">
-        {movies.map((movie) => (
-          <div key={movie.id} className="movie-card">
-            <div className="movie-poster">
-              {movie.posterUrl ? (
-                <img src={movie.posterUrl} alt={movie.title} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }} />
-              ) : (
-                <h3>{movie.title}</h3>
-              )}
-            </div>
-            <div className="movie-info">
-              <p className="movie-genre">{movie.genre || 'N/A'}</p>
-              <p className="movie-duration">{movie.duration} min</p>
-              <p className="movie-price">${movie.price?.toFixed(2) || '0.00'}</p>
-              <p className="movie-seats">{movie.availableSeats} seats available</p>
-              <p className="movie-time">
-                {movie.showTime ? new Date(movie.showTime).toLocaleString() : 'TBA'}
-              </p>
-              {movie.description && (
-                <p className="movie-description">{movie.description}</p>
-              )}
-              <div className="movie-actions">
-                <button
-                  className="details-button"
-                  onClick={() => handleViewDetails(movie)}
-                >
-                  View Details
-                </button>
-                <button
-                  className="book-button"
-                  onClick={() => handleBook(movie)}
-                  disabled={movie.availableSeats === 0}
-                >
-                  {movie.availableSeats === 0 ? 'Sold Out' : 'Book Now'}
-                </button>
+
+      {loading ? (
+        <div className="movies-grid">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      ) : movies.length === 0 ? (
+        <div className="empty-state">
+          <p>No movies found</p>
+          {(searchTerm || selectedGenre) && (
+            <button className="btn btn-secondary" onClick={() => { setSearchTerm(''); setSelectedGenre(''); }}>
+              Clear Filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="movies-grid">
+          {movies.map((movie) => (
+            <div key={movie.id} className="movie-card">
+              <div className="movie-poster">
+                {movie.posterUrl ? (
+                  <img src={movie.posterUrl} alt={movie.title} />
+                ) : (
+                  <div className="poster-fallback">
+                    <span>&#127909;</span>
+                    <h3>{movie.title}</h3>
+                  </div>
+                )}
+                <div className="poster-overlay">
+                  <button className="overlay-btn" onClick={() => handleViewDetails(movie)}>
+                    View Details
+                  </button>
+                </div>
+              </div>
+              <div className="movie-info">
+                <div className="movie-meta-row">
+                  <span className="movie-genre">{movie.genre || 'N/A'}</span>
+                  <span className={`movie-badge ${movie.availableSeats === 0 ? 'sold-out' : ''}`}>
+                    {movie.availableSeats === 0 ? 'Sold Out' : `${movie.availableSeats} left`}
+                  </span>
+                </div>
+                <h3 className="movie-title">{movie.title}</h3>
+                <div className="movie-meta">
+                  <span className="movie-duration">&#9201; {movie.duration} min</span>
+                  <span className="movie-time">
+                    &#128197; {movie.showTime ? new Date(movie.showTime).toLocaleDateString() : 'TBA'}
+                  </span>
+                </div>
+                <p className="movie-price">${movie.price?.toFixed(2) || '0.00'}</p>
+                {movie.description && (
+                  <p className="movie-description">{movie.description}</p>
+                )}
+                <div className="movie-actions">
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleBook(movie)}
+                    disabled={movie.availableSeats === 0}
+                  >
+                    {movie.availableSeats === 0 ? 'Sold Out' : 'Book Now'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

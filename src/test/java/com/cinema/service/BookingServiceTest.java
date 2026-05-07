@@ -7,6 +7,7 @@ import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.model.Booking;
 import com.cinema.model.Movie;
 import com.cinema.model.User;
+import com.cinema.pricing.PricingContext;
 import com.cinema.repository.BookingRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ class BookingServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private PricingContext pricingContext;
 
     @InjectMocks
     private BookingService bookingService;
@@ -83,6 +87,7 @@ class BookingServiceTest {
     void shouldCalculateTotalPriceWhenCreatingBooking() {
         when(movieService.getMovieById(1L)).thenReturn(movie);
         when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
+        when(pricingContext.calculatePrice(12.50, 2)).thenReturn(25.0);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
             Booking b = inv.getArgument(0);
             b.setId(1L);
@@ -100,6 +105,7 @@ class BookingServiceTest {
         movie.setPrice(null);
         when(movieService.getMovieById(1L)).thenReturn(movie);
         when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
+        when(pricingContext.calculatePrice(0.0, 2)).thenReturn(0.0);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
             Booking b = inv.getArgument(0);
             b.setId(1L);
@@ -178,9 +184,10 @@ class BookingServiceTest {
     }
 
     @Test
-    void shouldGenerateTicketPdf() throws Exception {
+    void shouldGenerateTicketPdf() {
         QRCodeService realQrService = new QRCodeService();
-        BookingService service = new BookingService(bookingRepository, movieService, userService, realQrService);
+        PricingContext realPricing = new PricingContext(List.of());
+        BookingService service = new BookingService(bookingRepository, movieService, userService, realQrService, realPricing);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
         byte[] pdf = service.generateTicketPdf(1L);
@@ -190,9 +197,10 @@ class BookingServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenGenerateTicketPdfBookingNotFound() throws Exception {
+    void shouldThrowExceptionWhenGenerateTicketPdfBookingNotFound() {
         QRCodeService realQrService = new QRCodeService();
-        BookingService service = new BookingService(bookingRepository, movieService, userService, realQrService);
+        PricingContext realPricing = new PricingContext(List.of());
+        BookingService service = new BookingService(bookingRepository, movieService, userService, realQrService, realPricing);
         when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,

@@ -5,6 +5,7 @@ import com.cinema.dto.BookingRequestDTO;
 import com.cinema.model.Booking;
 import com.cinema.model.Movie;
 import com.cinema.model.User;
+import com.cinema.pricing.PricingContext;
 import com.cinema.repository.BookingRepository;
 import com.cinema.exception.BadRequestException;
 import com.cinema.exception.ResourceNotFoundException;
@@ -26,15 +27,18 @@ public class BookingService {
     private final MovieService movieService;
     private final UserService userService;
     private final QRCodeService qrCodeService;
+    private final PricingContext pricingContext;
 
     public BookingService(BookingRepository bookingRepository,
                           MovieService movieService,
                           UserService userService,
-                          QRCodeService qrCodeService) {
+                          QRCodeService qrCodeService,
+                          PricingContext pricingContext) {
         this.bookingRepository = bookingRepository;
         this.movieService = movieService;
         this.userService = userService;
         this.qrCodeService = qrCodeService;
+        this.pricingContext = pricingContext;
     }
 
     public BookingDTO createBooking(String email, BookingRequestDTO request) {
@@ -58,7 +62,7 @@ public class BookingService {
         booking.setNumberOfSeats(request.getSeats());
         booking.setBookingDate(LocalDateTime.now());
         booking.setStatus("CONFIRMED");
-        booking.setTotalPrice(request.getSeats() * price);
+        booking.setTotalPrice(pricingContext.calculatePrice(price, request.getSeats()));
 
         Booking savedBooking = bookingRepository.save(booking);
 

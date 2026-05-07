@@ -18,18 +18,17 @@ public class QRCodeService {
                                   String movieTitle, int seats)
                                   throws WriterException, IOException {
         return Base64.getEncoder().encodeToString(
-            buildQRCodeBytes(bookingId, userName, movieTitle, seats)
+            buildQRCodeBytes(bookingId)
         );
     }
 
     public byte[] generateQRCodeBytes(Long bookingId, String userName,
                                        String movieTitle, int seats)
                                        throws WriterException, IOException {
-        return buildQRCodeBytes(bookingId, userName, movieTitle, seats);
+        return buildQRCodeBytes(bookingId);
     }
 
-    private byte[] buildQRCodeBytes(Long bookingId, String userName,
-                                     String movieTitle, int seats)
+    private byte[] buildQRCodeBytes(Long bookingId)
                                      throws WriterException, IOException {
         String content = String.format(
             "https://mahjoub07.github.io/cinema-reservation-system/my-bookings#booking-%d",

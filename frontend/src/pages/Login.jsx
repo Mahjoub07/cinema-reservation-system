@@ -8,7 +8,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,7 +28,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!validateForm()) return;
 
     setLoading(true);
@@ -44,39 +44,58 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-box">
-        <h1>Cinema Booking</h1>
-        <h2>Login</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              disabled={loading}
-            />
+    <div className="auth-page">
+      <div className="auth-visual">
+        <div className="auth-visual-gradient" />
+        <div className="auth-visual-content">
+          <span className="auth-visual-icon">&#127909;</span>
+          <h2>CineReserve</h2>
+          <p>Your premium cinema booking experience. Discover, book, and enjoy the magic of movies.</p>
+        </div>
+      </div>
+      <div className="auth-form-area">
+        <div className="auth-form-wrapper">
+          <div className="auth-form-header">
+            <h1>Welcome Back</h1>
+            <p>Sign in to continue your booking journey</p>
           </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              disabled={loading}
-            />
-          </div>
-          <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-        <p className="auth-link">
-          Don't have an account? <Link to="/register">Register</Link>
-        </p>
+
+          {error && <div className="error-message">{error}</div>}
+
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="form-group floating">
+              <input
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder=" "
+                disabled={loading}
+                required
+              />
+              <label htmlFor="login-email">Email</label>
+            </div>
+            <div className="form-group floating">
+              <input
+                id="login-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder=" "
+                disabled={loading}
+                required
+              />
+              <label htmlFor="login-password">Password</label>
+            </div>
+            <button type="submit" className="btn btn-primary btn-lg auth-submit" disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+
+          <p className="auth-switch">
+            Don't have an account? <Link to="/register">Register</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
