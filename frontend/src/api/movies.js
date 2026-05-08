@@ -34,12 +34,14 @@ export const deleteMovie = async (id) => {
   await api.delete(`/movies/${id}`);
 };
 
+// Upload movie poster to Supabase Storage via backend
+// Content-Type is set to undefined to let browser set it automatically with boundary parameter
 export const uploadPoster = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
   const response = await api.post('/movies/upload-poster', formData, {
     headers: {
-      'Content-Type': 'multipart/form-data'
+      'Content-Type': undefined
     }
   });
   return response.data;

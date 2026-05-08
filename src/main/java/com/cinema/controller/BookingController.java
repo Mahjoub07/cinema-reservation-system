@@ -4,6 +4,7 @@ import com.cinema.dto.BookingDTO;
 import com.cinema.dto.BookingRequestDTO;
 import com.cinema.service.BookingService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +12,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -29,6 +32,14 @@ public class BookingController {
             Authentication authentication) {
         String email = getAuthenticatedEmail(authentication);
         return ResponseEntity.ok(bookingService.createBooking(email, request));
+    }
+
+    @GetMapping("/seats/{movieId}")
+    public ResponseEntity<Map<String, List<Integer>>> getBookedSeats(
+            @PathVariable Long movieId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime showtime) {
+        List<Integer> bookedSeats = bookingService.getBookedSeatNumbers(movieId, showtime);
+        return ResponseEntity.ok(Map.of("bookedSeats", bookedSeats));
     }
 
     @GetMapping("/my-bookings")
@@ -60,6 +71,20 @@ public class BookingController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/{bookingId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteBooking(@PathVariable Long bookingId) {
+        bookingService.cancelBooking(bookingId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/bulk")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> bulkDeleteBookings(@RequestBody List<Long> ids) {
+        bookingService.bulkDeleteBookings(ids);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}/ticket")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<byte[]> downloadTicket(@PathVariable Long id) {
@@ -68,5 +93,11 @@ public class BookingController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=ticket-" + id + ".pdf")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
+    }
+
+    @GetMapping("/verify/{bookingId}")
+    public ResponseEntity<BookingDTO> verifyBooking(@PathVariable Long bookingId) {
+        BookingDTO booking = bookingService.verifyBooking(bookingId);
+        return ResponseEntity.ok(booking);
     }
 }

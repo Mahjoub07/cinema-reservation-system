@@ -17,7 +17,10 @@ import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,17 +44,49 @@ public class BookingService {
         this.pricingContext = pricingContext;
     }
 
+    public List<Integer> getBookedSeatNumbers(Long movieId, LocalDateTime showTime) {
+        List<Booking> bookings = bookingRepository.findByMovieIdAndShowTimeAndStatus(movieId, showTime, "CONFIRMED");
+        List<Integer> booked = new ArrayList<>();
+        for (Booking b : bookings) {
+            if (b.getSeatNumbers() != null && !b.getSeatNumbers().isEmpty()) {
+                for (String s : b.getSeatNumbers().split(",")) {
+                    booked.add(Integer.parseInt(s.trim()));
+                }
+            }
+        }
+        return booked;
+    }
+
     public BookingDTO createBooking(String email, BookingRequestDTO request) {
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Movie movie = movieService.getMovieById(request.getMovieId());
 
-        if (movie.getAvailableSeats() < request.getSeats()) {
-            throw new IllegalArgumentException("Not enough seats available");
+        List<Integer> requestedSeats = request.getSeatNumbers();
+        if (requestedSeats == null || requestedSeats.isEmpty()) {
+            throw new BadRequestException("At least one seat must be selected");
         }
 
-        movie.setAvailableSeats(movie.getAvailableSeats() - request.getSeats());
+        if (request.getShowTime() == null) {
+            throw new BadRequestException("Show time is required");
+        }
+
+        // Check for seat conflicts with existing CONFIRMED bookings for this specific showtime
+        List<Integer> alreadyBooked = getBookedSeatNumbers(request.getMovieId(), request.getShowTime());
+        List<Integer> conflicts = requestedSeats.stream()
+                .filter(alreadyBooked::contains)
+                .collect(Collectors.toList());
+
+        if (!conflicts.isEmpty()) {
+            throw new BadRequestException("Seats already booked: " + conflicts);
+        }
+
+        if (movie.getAvailableSeats() < requestedSeats.size()) {
+            throw new BadRequestException("Not enough seats available");
+        }
+
+        movie.setAvailableSeats(movie.getAvailableSeats() - requestedSeats.size());
         movieService.updateMovieSeats(movie);
 
         double price = movie.getPrice() != null ? movie.getPrice() : 0.0;
@@ -59,10 +94,15 @@ public class BookingService {
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setMovie(movie);
-        booking.setNumberOfSeats(request.getSeats());
+        booking.setNumberOfSeats(requestedSeats.size());
         booking.setBookingDate(LocalDateTime.now());
         booking.setStatus("CONFIRMED");
-        booking.setTotalPrice(pricingContext.calculatePrice(price, request.getSeats()));
+        booking.setTotalPrice(pricingContext.calculatePrice(price, requestedSeats.size()));
+        booking.setSeatNumbers(requestedSeats.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(",")));
+        booking.setShowTime(request.getShowTime());
+        booking.setVerificationToken(UUID.randomUUID().toString());
 
         Booking savedBooking = bookingRepository.save(booking);
 
@@ -71,7 +111,7 @@ public class BookingService {
                 savedBooking.getId(),
                 user.getName(),
                 movie.getTitle(),
-                request.getSeats()
+                requestedSeats.size()
             );
             savedBooking.setQrCode(qrCode);
             bookingRepository.save(savedBooking);
@@ -85,6 +125,12 @@ public class BookingService {
     public Booking getBookingById(Long id) {
         return bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+    }
+
+    public BookingDTO verifyBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        return convertToDTO(booking);
     }
 
     public byte[] generateTicketPdf(Long bookingId) {
@@ -162,13 +208,26 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
         booking.setStatus("CANCELLED");
+        booking.setSeatNumbers(null);
         Movie movie = booking.getMovie();
         movie.setAvailableSeats(movie.getAvailableSeats() + booking.getNumberOfSeats());
         movieService.updateMovieSeats(movie);
         bookingRepository.save(booking);
     }
 
+    public void bulkDeleteBookings(List<Long> ids) {
+        for (Long id : ids) {
+            cancelBooking(id);
+        }
+    }
+
     private BookingDTO convertToDTO(Booking booking) {
+        List<Integer> seatNumbers = new ArrayList<>();
+        if (booking.getSeatNumbers() != null && !booking.getSeatNumbers().isEmpty()) {
+            for (String s : booking.getSeatNumbers().split(",")) {
+                seatNumbers.add(Integer.parseInt(s.trim()));
+            }
+        }
         return new BookingDTO(
             booking.getId(),
             booking.getUser().getId(),
@@ -178,7 +237,10 @@ public class BookingService {
             booking.getNumberOfSeats(),
             booking.getBookingDate(),
             booking.getStatus(),
-            booking.getTotalPrice()
+            booking.getTotalPrice(),
+            seatNumbers,
+            booking.getShowTime(),
+            booking.getVerificationToken()
         );
     }
 }

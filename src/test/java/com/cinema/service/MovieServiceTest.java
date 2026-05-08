@@ -4,6 +4,7 @@ import com.cinema.dto.MovieDTO;
 import com.cinema.exception.BadRequestException;
 import com.cinema.exception.ResourceNotFoundException;
 import com.cinema.model.Movie;
+import com.cinema.repository.BookingRepository;
 import com.cinema.repository.MovieRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,6 +26,12 @@ class MovieServiceTest {
 
     @Mock
     private MovieRepository movieRepository;
+
+    @Mock
+    private BookingRepository bookingRepository;
+
+    @Mock
+    private com.cinema.service.SupabaseStorageService supabaseStorageService;
 
     @InjectMocks
     private MovieService movieService;
@@ -97,11 +105,24 @@ class MovieServiceTest {
 
     @Test
     void shouldDeleteMovie() {
+        doNothing().when(bookingRepository).deleteByMovieIdIn(anyList());
         doNothing().when(movieRepository).deleteById(1L);
 
         movieService.deleteMovie(1L);
 
+        verify(bookingRepository, times(1)).deleteByMovieIdIn(anyList());
         verify(movieRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    void shouldBulkDeleteMovies() {
+        doNothing().when(bookingRepository).deleteByMovieIdIn(anyList());
+        doNothing().when(movieRepository).deleteAllById(anyList());
+
+        movieService.bulkDeleteMovies(Arrays.asList(1L, 2L));
+
+        verify(bookingRepository, times(1)).deleteByMovieIdIn(Arrays.asList(1L, 2L));
+        verify(movieRepository, times(1)).deleteAllById(Arrays.asList(1L, 2L));
     }
 
     @Test
@@ -171,5 +192,20 @@ class MovieServiceTest {
         when(file.getContentType()).thenReturn(null);
 
         assertThrows(BadRequestException.class, () -> movieService.uploadPoster(file));
+    }
+
+    @Test
+    void shouldUploadPosterSuccessfully() throws Exception {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getOriginalFilename()).thenReturn("poster.jpg");
+        when(file.getBytes()).thenReturn(new byte[]{1, 2, 3});
+        when(supabaseStorageService.uploadFile(anyString(), anyString(), any(byte[].class), anyString()))
+                .thenReturn("https://storage.com/posters/test.jpg");
+
+        String result = movieService.uploadPoster(file);
+
+        assertEquals("https://storage.com/posters/test.jpg", result);
     }
 }

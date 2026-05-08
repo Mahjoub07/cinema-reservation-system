@@ -1,7 +1,19 @@
 import api from './axios';
 
-export const createBooking = async (movieId, seats) => {
-  const response = await api.post('/bookings', { movieId, seats });
+export const createBooking = async (movieId, seatNumbers, showTime) => {
+  const response = await api.post('/bookings', {
+    movieId,
+    seats: seatNumbers.length,
+    seatNumbers,
+    showTime
+  });
+  return response.data;
+};
+
+export const getBookedSeats = async (movieId, showTime) => {
+  const response = await api.get(`/bookings/seats/${movieId}`, {
+    params: { showtime: showTime }
+  });
   return response.data;
 };
 
@@ -36,4 +48,9 @@ export const downloadTicket = async (bookingId) => {
   link.click();
   link.remove();
   window.URL.revokeObjectURL(url);
+};
+
+export const verifyBooking = async (bookingId) => {
+  const response = await api.get(`/bookings/verify/${bookingId}`);
+  return response.data;
 };

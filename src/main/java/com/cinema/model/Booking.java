@@ -26,11 +26,29 @@ public class Booking {
     @Column(length = 5000)
     private String qrCode;
 
+    @Column(name = "seat_numbers")
+    private String seatNumbers; // comma-separated seat indices e.g. "1,2,3"
+
+    @Column(name = "show_time")
+    private LocalDateTime showTime;
+
+    @Column(name = "verification_token", unique = true, length = 255)
+    private String verificationToken;
+
     public String getQrCode() { return qrCode; }
     public void setQrCode(String qrCode) { this.qrCode = qrCode; }
 
     public Double getTotalPrice() { return totalPrice; }
     public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }
+
+    public String getSeatNumbers() { return seatNumbers; }
+    public void setSeatNumbers(String seatNumbers) { this.seatNumbers = seatNumbers; }
+
+    public LocalDateTime getShowTime() { return showTime; }
+    public void setShowTime(LocalDateTime showTime) { this.showTime = showTime; }
+
+    public String getVerificationToken() { return verificationToken; }
+    public void setVerificationToken(String verificationToken) { this.verificationToken = verificationToken; }
 
     // Getters and Setters
     public Long getId() { return id; }

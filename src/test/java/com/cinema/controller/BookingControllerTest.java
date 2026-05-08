@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,8 +33,9 @@ class BookingControllerTest {
 
     @BeforeEach
     void setUp() {
-        bookingDTO = new BookingDTO(1L, 1L, "mahjoub@cinema.com", 1L, "Inception", 2, LocalDateTime.now(), "CONFIRMED", null);
-        bookingRequest = new BookingRequestDTO(1L, 2);
+        LocalDateTime showTime = LocalDateTime.now().plusDays(1);
+        bookingDTO = new BookingDTO(1L, 1L, "mahjoub@cinema.com", 1L, "Inception", 2, LocalDateTime.now(), "CONFIRMED", null, List.of(1, 2), showTime, "test-token-123");
+        bookingRequest = new BookingRequestDTO(1L, 2, List.of(1, 2), showTime);
     }
 
     @Test
@@ -55,6 +57,12 @@ class BookingControllerTest {
     }
 
     @Test
+    void shouldThrowExceptionWhenAuthenticationIsNull() {
+        assertThrows(RuntimeException.class,
+                () -> bookingController.createBooking(bookingRequest, null));
+    }
+
+    @Test
     void shouldGetUserBookings() {
         when(bookingService.getUserBookingsByUserId(1L)).thenReturn(Arrays.asList(bookingDTO));
 
@@ -67,12 +75,43 @@ class BookingControllerTest {
     }
 
     @Test
+    void shouldGetAllBookings() {
+        when(bookingService.getAllBookings()).thenReturn(Arrays.asList(bookingDTO));
+
+        List<BookingDTO> result = bookingController.getAllBookings().getBody();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("CONFIRMED", result.get(0).getStatus());
+    }
+
+    @Test
     void shouldCancelBooking() {
         doNothing().when(bookingService).cancelBooking(1L);
 
         bookingController.cancelBooking(1L);
 
         verify(bookingService, times(1)).cancelBooking(1L);
+    }
+
+    @Test
+    void shouldDeleteBooking() {
+        doNothing().when(bookingService).cancelBooking(1L);
+
+        var response = bookingController.deleteBooking(1L);
+
+        assertEquals(204, response.getStatusCode().value());
+        verify(bookingService, times(1)).cancelBooking(1L);
+    }
+
+    @Test
+    void shouldBulkDeleteBookings() {
+        doNothing().when(bookingService).bulkDeleteBookings(anyList());
+
+        var response = bookingController.bulkDeleteBookings(Arrays.asList(1L, 2L));
+
+        assertEquals(204, response.getStatusCode().value());
+        verify(bookingService, times(1)).bulkDeleteBookings(Arrays.asList(1L, 2L));
     }
 
     @Test

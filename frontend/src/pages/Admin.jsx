@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { getAllMovies, addMovie, updateMovie, deleteMovie, uploadPoster } from '../api/movies';
 import { getAllBookingsAdmin, getDashboardStats, getAllUsers, updateUserRole, deleteUser, createAdmin } from '../api/admin';
+import api from '../api/axios';
 import LoadingSpinner from '../components/LoadingSpinner';
 import '../styles/Admin.css';
 
@@ -16,6 +17,8 @@ const Admin = () => {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingMovie, setEditingMovie] = useState(null);
+  const [selectedMovies, setSelectedMovies] = useState(new Set());
+  const [selectedBookings, setSelectedBookings] = useState(new Set());
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -102,8 +105,97 @@ const Admin = () => {
     try {
       await deleteMovie(id);
       setMovies(movies.filter(m => m.id !== id));
+      addToast('Movie deleted successfully', 'success');
     } catch (err) {
-      setError('Failed to delete movie');
+      const msg = err.response?.data?.message || 'Failed to delete movie';
+      setError(msg);
+      addToast(msg, 'error');
+    }
+  };
+
+  const handleDeleteBooking = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this booking?')) return;
+
+    try {
+      await api.delete(`/bookings/${id}`);
+      setBookings(bookings.filter(b => b.id !== id));
+      addToast('Booking deleted successfully', 'success');
+    } catch (err) {
+      setError('Failed to delete booking');
+    }
+  };
+
+  const handleSelectMovie = (id) => {
+    setSelectedMovies(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllMovies = () => {
+    if (selectedMovies.size === movies.length) {
+      setSelectedMovies(new Set());
+    } else {
+      setSelectedMovies(new Set(movies.map(m => m.id)));
+    }
+  };
+
+  const handleBulkDeleteMovies = async () => {
+    if (selectedMovies.size === 0) return;
+    const count = selectedMovies.size;
+    if (!window.confirm(`Are you sure you want to delete ${count} movie(s)?`)) return;
+
+    try {
+      await api.delete('/movies/bulk', { data: Array.from(selectedMovies) });
+      setMovies(movies.filter(m => !selectedMovies.has(m.id)));
+      setSelectedMovies(new Set());
+      addToast(`${count} movie(s) deleted successfully`, 'success');
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to delete movies';
+      setError(msg);
+      addToast(msg, 'error');
+    }
+  };
+
+  const handleSelectBooking = (id) => {
+    setSelectedBookings(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllBookings = () => {
+    if (selectedBookings.size === bookings.length) {
+      setSelectedBookings(new Set());
+    } else {
+      setSelectedBookings(new Set(bookings.map(b => b.id)));
+    }
+  };
+
+  const handleBulkDeleteBookings = async () => {
+    if (selectedBookings.size === 0) return;
+    const count = selectedBookings.size;
+    if (!window.confirm(`Are you sure you want to delete ${count} booking(s)?`)) return;
+
+    try {
+      await api.delete('/bookings/bulk', { data: Array.from(selectedBookings) });
+      setBookings(bookings.filter(b => !selectedBookings.has(b.id)));
+      setSelectedBookings(new Set());
+      addToast(`${count} booking(s) deleted successfully`, 'success');
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to delete bookings';
+      setError(msg);
+      addToast(msg, 'error');
     }
   };
 
@@ -127,6 +219,7 @@ const Admin = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Upload poster to Supabase Storage and update form data with returned URL
   const handlePosterUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -135,7 +228,7 @@ const Admin = () => {
       setFormData({ ...formData, posterUrl: result.url });
       addToast('Poster uploaded successfully', 'success');
     } catch (err) {
-      addToast('Failed to upload poster', 'error');
+      addToast(`Failed to upload poster: ${err.response?.data?.message || err.message || 'Unknown error'}`, 'error');
     }
   };
 
@@ -259,15 +352,29 @@ const Admin = () => {
             <div className="admin-section">
               <div className="section-toolbar">
                 <h2>Movies</h2>
-                <button className="btn btn-primary btn-sm" onClick={handleAddMovie}>
-                  <span>+</span> Add Movie
-                </button>
+                <div className="toolbar-actions">
+                  {selectedMovies.size > 0 && (
+                    <button className="btn btn-sm btn-danger" onClick={handleBulkDeleteMovies}>
+                      Delete Selected ({selectedMovies.size})
+                    </button>
+                  )}
+                  <button className="btn btn-primary btn-sm" onClick={handleAddMovie}>
+                    <span>+</span> Add Movie
+                  </button>
+                </div>
               </div>
               <div className="admin-table-wrap">
                 <div className="admin-table">
                   <table>
                     <thead>
                       <tr>
+                        <th style={{ width: '40px' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedMovies.size === movies.length && movies.length > 0}
+                            onChange={handleSelectAllMovies}
+                          />
+                        </th>
                         <th>Title</th>
                         <th>Genre</th>
                         <th>Duration</th>
@@ -279,6 +386,13 @@ const Admin = () => {
                     <tbody>
                       {movies.map((movie) => (
                         <tr key={movie.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={selectedMovies.has(movie.id)}
+                              onChange={() => handleSelectMovie(movie.id)}
+                            />
+                          </td>
                           <td>
                             <span className="cell-title">{movie.title}</span>
                           </td>
@@ -329,21 +443,21 @@ const Admin = () => {
                     </div>
                     <div className="form-group">
                       <label>Duration (min)</label>
-                      <input type="number" name="duration" value={formData.duration} onChange={handleChange} required />
+                      <input type="number" name="duration" value={formData.duration} onChange={handleChange} required min="1" />
                     </div>
 
                     <div className="form-group">
                       <label>Show Time</label>
-                      <input type="datetime-local" name="showTime" value={formData.showTime} onChange={handleChange} />
+                      <input type="datetime-local" name="showTime" value={formData.showTime} onChange={handleChange} required />
                     </div>
                     <div className="form-group">
                       <label>Seats</label>
-                      <input type="number" name="availableSeats" value={formData.availableSeats} onChange={handleChange} required />
+                      <input type="number" name="availableSeats" value={formData.availableSeats} onChange={handleChange} required min="1" />
                     </div>
 
                     <div className="form-group">
                       <label>Price ($)</label>
-                      <input type="number" name="price" value={formData.price} onChange={handleChange} step="0.01" min="0" />
+                      <input type="number" name="price" value={formData.price} onChange={handleChange} step="0.01" min="0" required />
                     </div>
                     <div className="form-group poster-group">
                       <label>Poster</label>
@@ -385,32 +499,63 @@ const Admin = () => {
             <div className="admin-section">
               <div className="section-toolbar">
                 <h2>Bookings</h2>
+                <div className="toolbar-actions">
+                  {selectedBookings.size > 0 && (
+                    <button className="btn btn-sm btn-danger" onClick={handleBulkDeleteBookings}>
+                      Delete Selected ({selectedBookings.size})
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="admin-table-wrap">
                 <div className="admin-table">
                   <table>
                     <thead>
                       <tr>
+                        <th style={{ width: '40px' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedBookings.size === bookings.length && bookings.length > 0}
+                            onChange={handleSelectAllBookings}
+                          />
+                        </th>
                         <th>ID</th>
                         <th>Movie</th>
                         <th>User</th>
                         <th>Seats</th>
                         <th>Date</th>
                         <th>Status</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {bookings.map((booking) => (
                         <tr key={booking.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={selectedBookings.has(booking.id)}
+                              onChange={() => handleSelectBooking(booking.id)}
+                            />
+                          </td>
                           <td><span className="cell-mono">#{booking.id}</span></td>
                           <td><span className="cell-title">{booking.movieTitle || 'N/A'}</span></td>
                           <td>{booking.userEmail || 'N/A'}</td>
-                          <td>{booking.numberOfSeats}</td>
+                          <td>
+                            {booking.seatNumbers && booking.seatNumbers.length > 0
+                              ? '#' + booking.seatNumbers.map(s => s + 1).join(', ')
+                              : booking.numberOfSeats}
+                          </td>
                           <td>{booking.bookingDate ? new Date(booking.bookingDate).toLocaleString() : 'N/A'}</td>
                           <td>
                             <span className={`table-status ${booking.status.toLowerCase()}`}>
                               {booking.status}
                             </span>
+                          </td>
+                          <td>
+                            <div className="row-actions">
+                              <button className="btn btn-sm btn-ghost" onClick={() => handleDeleteBooking(booking.id)}>Delete</button>
+                            </div>
                           </td>
                         </tr>
                       ))}
