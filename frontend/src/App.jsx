@@ -20,7 +20,7 @@ function AnimatedRoutes() {
 
   return (
     <main className="main-content">
-      <div key={location.pathname} className="page-enter">
+      <div className="page-enter">
         <Routes location={location}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

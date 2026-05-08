@@ -65,45 +65,42 @@ const Register = () => {
           {error && <div className="error-message">{error}</div>}
 
           <form onSubmit={handleSubmit} className="auth-form">
-            <div className="form-group floating">
+            <div className="form-group glass">
               <input
                 id="reg-name"
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder=" "
+                placeholder="Full name"
                 disabled={loading}
                 required
               />
-              <label htmlFor="reg-name">Full Name</label>
             </div>
-            <div className="form-group floating">
+            <div className="form-group glass">
               <input
                 id="reg-email"
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder=" "
+                placeholder="Email address"
                 disabled={loading}
                 required
               />
-              <label htmlFor="reg-email">Email</label>
             </div>
-            <div className="form-group floating">
+            <div className="form-group glass">
               <input
                 id="reg-password"
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder=" "
+                placeholder="Password (min 6 characters)"
                 disabled={loading}
                 required
                 minLength={6}
               />
-              <label htmlFor="reg-password">Password</label>
             </div>
             <button type="submit" className="btn btn-primary btn-lg auth-submit" disabled={loading}>
               {loading ? 'Creating account...' : 'Create Account'}

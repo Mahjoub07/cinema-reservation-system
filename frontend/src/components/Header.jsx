@@ -16,11 +16,6 @@ const Header = () => {
 
   const closeMenu = () => setMobileMenuOpen(false);
 
-  const getInitials = (name) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
   return (
     <header className="header">
       <div className="header-container">
@@ -36,10 +31,6 @@ const Header = () => {
               <Link to="/my-bookings" className="nav-link" onClick={closeMenu}>My Bookings</Link>
               {isAdmin() && <Link to="/admin" className="nav-link" onClick={closeMenu}>Admin</Link>}
               <div className="nav-divider" />
-              <div className="user-pill">
-                <span className="user-avatar">{getInitials(user.email)}</span>
-                <span className="user-email">{user.email}</span>
-              </div>
               <button onClick={handleLogout} className="logout-button">
                 <span>Logout</span>
               </button>
