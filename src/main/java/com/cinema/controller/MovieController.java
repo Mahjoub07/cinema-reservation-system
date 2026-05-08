@@ -71,4 +71,11 @@ public class MovieController {
         String url = movieService.uploadPoster(file);
         return ResponseEntity.ok(Map.of("url", url));
     }
+
+    @PostMapping("/upload-backdrop")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> uploadBackdrop(@RequestParam("file") MultipartFile file) {
+        String url = movieService.uploadBackdrop(file);
+        return ResponseEntity.ok(Map.of("url", url));
+    }
 }

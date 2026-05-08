@@ -45,6 +45,7 @@
   --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.6);
   --shadow-brand: 0 4px 16px rgba(229, 9, 20, 0.3);
   --shadow-brand-lg: 0 8px 32px rgba(229, 9, 20, 0.4);
+  --shadow-glow-red: 0 0 40px rgba(229, 9, 20, 0.15);
 
   /* Spacing */
   --space-xs: 4px;
@@ -110,8 +111,8 @@ body {
   right: 0;
   bottom: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(229, 9, 20, 0.08), transparent),
-    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(15, 52, 96, 0.1), transparent);
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(229, 9, 20, 0.06), transparent),
+    radial-gradient(ellipse 60% 40% at 20% 100%, rgba(229, 9, 20, 0.04), transparent);
   pointer-events: none;
   z-index: 0;
 }
@@ -329,8 +330,12 @@ body {
 
 .btn-primary:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--brand-red-light), var(--brand-red));
-  box-shadow: var(--shadow-brand-lg);
+  box-shadow: var(--shadow-brand-lg), var(--shadow-glow-red);
   transform: translateY(-2px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
 }
 
 .btn-secondary {
@@ -439,7 +444,7 @@ select option {
    ============================================ */
 
 .glass-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   backdrop-filter: blur(20px);
@@ -448,9 +453,9 @@ select option {
 }
 
 .glass-card:hover {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(229, 9, 20, 0.2);
   transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-lg), 0 0 30px rgba(229, 9, 20, 0.08);
 }
 
 /* ============================================

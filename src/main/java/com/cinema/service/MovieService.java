@@ -75,6 +75,7 @@ public class MovieService {
         movie.setAvailableSeats(movieDTO.getAvailableSeats());
         movie.setPrice(movieDTO.getPrice());
         movie.setPosterUrl(movieDTO.getPosterUrl());
+        movie.setBackdropUrl(movieDTO.getBackdropUrl());
         Movie savedMovie = movieRepository.save(movie);
         return convertToDTO(savedMovie);
     }
@@ -96,6 +97,14 @@ public class MovieService {
     }
 
     public String uploadPoster(MultipartFile file) {
+        return uploadImage(file, "poster");
+    }
+
+    public String uploadBackdrop(MultipartFile file) {
+        return uploadImage(file, "backdrop");
+    }
+
+    private String uploadImage(MultipartFile file, String defaultName) {
         if (file == null || file.isEmpty()) {
             throw new BadRequestException("File is required");
         }
@@ -105,7 +114,7 @@ public class MovieService {
         }
 
         String originalName = file.getOriginalFilename();
-        String safeName = originalName != null ? originalName.replaceAll("[^a-zA-Z0-9.\\-]", "_") : "poster";
+        String safeName = originalName != null ? originalName.replaceAll("[^a-zA-Z0-9.\\-]", "_") : defaultName;
         String fileName = UUID.randomUUID() + "_" + safeName;
 
         try {
@@ -125,6 +134,7 @@ public class MovieService {
             movie.getShowTime(),
             movie.getAvailableSeats(),
             movie.getPosterUrl(),
+            movie.getBackdropUrl(),
             movie.getPrice()
         );
     }
@@ -138,6 +148,7 @@ public class MovieService {
         movie.setShowTime(dto.getShowTime());
         movie.setAvailableSeats(dto.getAvailableSeats());
         movie.setPosterUrl(dto.getPosterUrl());
+        movie.setBackdropUrl(dto.getBackdropUrl());
         movie.setPrice(dto.getPrice());
         return movie;
     }

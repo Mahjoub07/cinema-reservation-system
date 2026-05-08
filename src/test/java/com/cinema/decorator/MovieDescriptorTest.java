@@ -17,7 +17,7 @@ class MovieDescriptorTest {
     void setUp() {
         movie = new MovieDTO(
                 1L, "Inception", "Mind-bending thriller", "Sci-Fi",
-                148, LocalDateTime.now(), 100, "poster.jpg", 12.50
+                148, LocalDateTime.now(), 100, "poster.jpg", "backdrop.jpg", 12.50
         );
         baseDescriptor = new BaseMovieDescriptor();
     }
@@ -34,7 +34,7 @@ class MovieDescriptorTest {
     void baseDescriptorShouldHandleNullDescription() {
         MovieDTO noDescMovie = new MovieDTO(
                 2L, "Avatar", null, "Sci-Fi",
-                162, LocalDateTime.now(), 50, null, 10.0
+                162, LocalDateTime.now(), 50, null, null, 10.0
         );
         String desc = baseDescriptor.describe(noDescMovie);
         assertTrue(desc.contains("No description"));

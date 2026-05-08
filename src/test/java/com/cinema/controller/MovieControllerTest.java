@@ -29,7 +29,7 @@ class MovieControllerTest {
 
     @BeforeEach
     void setUp() {
-        movieDTO = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, null, 100, null, null);
+        movieDTO = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, null, 100, null, null, null);
     }
 
     @Test
@@ -134,5 +134,25 @@ class MovieControllerTest {
         when(movieService.uploadPoster(file)).thenThrow(new RuntimeException("Invalid file type"));
 
         assertThrows(RuntimeException.class, () -> movieController.uploadPoster(file));
+    }
+
+    @Test
+    void shouldUploadBackdrop() throws Exception {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(movieService.uploadBackdrop(file)).thenReturn("/uploads/backdrops/test.jpg");
+
+        var response = movieController.uploadBackdrop(file);
+
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals("/uploads/backdrops/test.jpg", response.getBody().get("url"));
+    }
+
+    @Test
+    void shouldReturnErrorWhenUploadBackdropValidationFails() throws Exception {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(movieService.uploadBackdrop(file)).thenThrow(new RuntimeException("Invalid file type"));
+
+        assertThrows(RuntimeException.class, () -> movieController.uploadBackdrop(file));
     }
 }

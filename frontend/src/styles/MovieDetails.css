@@ -36,7 +36,7 @@
   width: 100%;
   height: 380px;
   border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background: #0a0a0a;
   background-size: cover;
   background-position: center;
   overflow: hidden;
@@ -47,7 +47,9 @@
 .backdrop-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(10,10,10,0.2) 0%, rgba(10,10,10,0.7) 60%, var(--bg-primary) 100%);
+  background:
+    linear-gradient(to bottom, rgba(10,10,10,0.3) 0%, rgba(10,10,10,0.7) 50%, var(--bg-primary) 100%),
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(229, 9, 20, 0.08), transparent);
 }
 
 /* Content */
@@ -61,16 +63,28 @@
 
 .details-poster {
   width: 280px;
-  height: 400px;
+  aspect-ratio: 2 / 3;
   flex-shrink: 0;
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 4px 20px rgba(229, 9, 20, 0.1);
   position: relative;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background: #111;
   margin-top: -120px;
   z-index: 2;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s ease;
+}
+
+.details-poster:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow:
+    0 28px 72px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(229, 9, 20, 0.15),
+    0 8px 32px rgba(229, 9, 20, 0.15);
 }
 
 .details-poster img {
@@ -149,15 +163,16 @@
 }
 
 .details-title {
-  font-size: 2.6rem;
+  font-size: 2.8rem;
   font-weight: 800;
   margin-bottom: var(--space-md);
-  letter-spacing: -1px;
-  background: linear-gradient(135deg, #fff, #ccc);
+  letter-spacing: -1.5px;
+  background: linear-gradient(135deg, #fff 0%, #e0e0e0 50%, #ffcccc 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  line-height: 1.15;
+  line-height: 1.1;
+  text-shadow: none;
 }
 
 .details-meta {
@@ -176,11 +191,12 @@
 }
 
 .details-description {
-  color: #bbb;
-  line-height: 1.7;
+  color: #aaa;
+  line-height: 1.8;
   margin-bottom: var(--space-xl);
   font-size: 1.05rem;
   max-width: 600px;
+  letter-spacing: 0.2px;
 }
 
 .details-actions {
@@ -207,7 +223,7 @@
 
   .details-poster {
     width: 200px;
-    height: 300px;
+    aspect-ratio: 2 / 3;
     margin-top: -80px;
   }
 
