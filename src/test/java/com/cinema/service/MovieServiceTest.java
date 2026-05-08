@@ -208,4 +208,224 @@ class MovieServiceTest {
 
         assertEquals("https://storage.com/posters/test.jpg", result);
     }
+
+    @Test
+    void shouldUploadBackdropSuccessfully() throws Exception {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getOriginalFilename()).thenReturn("backdrop.jpg");
+        when(file.getBytes()).thenReturn(new byte[]{1, 2, 3});
+        when(supabaseStorageService.uploadFile(anyString(), anyString(), any(byte[].class), anyString()))
+                .thenReturn("https://storage.com/backdrops/test.jpg");
+
+        String result = movieService.uploadBackdrop(file);
+
+        assertEquals("https://storage.com/backdrops/test.jpg", result);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUploadingNullBackdrop() {
+        assertThrows(BadRequestException.class, () -> movieService.uploadBackdrop(null));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUploadingEmptyBackdrop() {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(true);
+
+        assertThrows(BadRequestException.class, () -> movieService.uploadBackdrop(file));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUploadingBackdropWithInvalidType() {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("application/pdf");
+
+        assertThrows(BadRequestException.class, () -> movieService.uploadBackdrop(file));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUploadingBackdropWithNullContentType() {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn(null);
+
+        assertThrows(BadRequestException.class, () -> movieService.uploadBackdrop(file));
+    }
+
+    @Test
+    void shouldGetMovieDTOById() {
+        when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
+
+        MovieDTO result = movieService.getMovieDTOById(1L);
+
+        assertNotNull(result);
+        assertEquals("Inception", result.getTitle());
+        assertEquals(1L, result.getId());
+        assertEquals("Sci-Fi", result.getGenre());
+        verify(movieRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenGettingMovieDTOByIdNotFound() {
+        when(movieRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> movieService.getMovieDTOById(99L));
+    }
+
+    @Test
+    void shouldUpdateMovieSeats() {
+        when(movieRepository.save(any(Movie.class))).thenReturn(movie);
+
+        movieService.updateMovieSeats(movie);
+
+        verify(movieRepository, times(1)).save(movie);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUploadingPosterWithIOException() throws Exception {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getOriginalFilename()).thenReturn("poster.jpg");
+        when(file.getBytes()).thenThrow(new java.io.IOException("Read error"));
+
+        assertThrows(BadRequestException.class, () -> movieService.uploadPoster(file));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUploadingBackdropWithIOException() throws Exception {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getOriginalFilename()).thenReturn("backdrop.jpg");
+        when(file.getBytes()).thenThrow(new java.io.IOException("Read error"));
+
+        assertThrows(BadRequestException.class, () -> movieService.uploadBackdrop(file));
+    }
+
+    @Test
+    void shouldHandleFileNameWithSpecialCharacters() throws Exception {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("image/png");
+        when(file.getOriginalFilename()).thenReturn("poster@#$%.png");
+        when(file.getBytes()).thenReturn(new byte[]{1, 2, 3});
+        when(supabaseStorageService.uploadFile(anyString(), anyString(), any(byte[].class), anyString()))
+                .thenReturn("https://storage.com/posters/test.png");
+
+        String result = movieService.uploadPoster(file);
+
+        assertEquals("https://storage.com/posters/test.png", result);
+        verify(supabaseStorageService, times(1)).uploadFile(anyString(), anyString(), any(byte[].class), anyString());
+    }
+
+    @Test
+    void shouldHandleFileNameWithNullOriginalFilename() throws Exception {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("image/webp");
+        when(file.getOriginalFilename()).thenReturn(null);
+        when(file.getBytes()).thenReturn(new byte[]{1, 2, 3});
+        when(supabaseStorageService.uploadFile(anyString(), anyString(), any(byte[].class), anyString()))
+                .thenReturn("https://storage.com/posters/test.webp");
+
+        String result = movieService.uploadPoster(file);
+
+        assertEquals("https://storage.com/posters/test.webp", result);
+    }
+
+    @Test
+    void shouldHandleFileNameWithNullOriginalFilenameForBackdrop() throws Exception {
+        org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("image/gif");
+        when(file.getOriginalFilename()).thenReturn(null);
+        when(file.getBytes()).thenReturn(new byte[]{1, 2, 3});
+        when(supabaseStorageService.uploadFile(anyString(), anyString(), any(byte[].class), anyString()))
+                .thenReturn("https://storage.com/backdrops/test.gif");
+
+        String result = movieService.uploadBackdrop(file);
+
+        assertEquals("https://storage.com/backdrops/test.gif", result);
+    }
+
+    @Test
+    void shouldGetMovieDTOByIdWithAllFields() {
+        Movie movieWithAllFields = new Movie();
+        movieWithAllFields.setId(2L);
+        movieWithAllFields.setTitle("Interstellar");
+        movieWithAllFields.setDescription("A complex sci-fi adventure");
+        movieWithAllFields.setGenre("Sci-Fi");
+        movieWithAllFields.setDuration(169);
+        movieWithAllFields.setAvailableSeats(50);
+        movieWithAllFields.setPrice(15.99);
+        movieWithAllFields.setPosterUrl("/uploads/interstellar-poster.jpg");
+        movieWithAllFields.setBackdropUrl("/uploads/interstellar-backdrop.jpg");
+
+        when(movieRepository.findById(2L)).thenReturn(Optional.of(movieWithAllFields));
+
+        MovieDTO result = movieService.getMovieDTOById(2L);
+
+        assertNotNull(result);
+        assertEquals("Interstellar", result.getTitle());
+        assertEquals("A complex sci-fi adventure", result.getDescription());
+        assertEquals(169, result.getDuration());
+        assertEquals(50, result.getAvailableSeats());
+        assertEquals(15.99, result.getPrice());
+        assertEquals("/uploads/interstellar-poster.jpg", result.getPosterUrl());
+        assertEquals("/uploads/interstellar-backdrop.jpg", result.getBackdropUrl());
+    }
+
+    @Test
+    void shouldDeleteMovieCallBothRepositories() {
+        doNothing().when(bookingRepository).deleteByMovieIdIn(List.of(1L));
+        doNothing().when(movieRepository).deleteById(1L);
+
+        movieService.deleteMovie(1L);
+
+        verify(bookingRepository, times(1)).deleteByMovieIdIn(List.of(1L));
+        verify(movieRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    void shouldBulkDeleteMoviesWithMultipleIds() {
+        List<Long> ids = Arrays.asList(1L, 2L, 3L);
+        doNothing().when(bookingRepository).deleteByMovieIdIn(ids);
+        doNothing().when(movieRepository).deleteAllById(ids);
+
+        movieService.bulkDeleteMovies(ids);
+
+        verify(bookingRepository, times(1)).deleteByMovieIdIn(ids);
+        verify(movieRepository, times(1)).deleteAllById(ids);
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoMoviesFound() {
+        when(movieRepository.findAll()).thenReturn(Arrays.asList());
+
+        List<MovieDTO> result = movieService.getAllMovies();
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenSearchingByTitleWithNoResults() {
+        when(movieRepository.findByTitleContainingIgnoreCase("NonExistent")).thenReturn(Arrays.asList());
+
+        List<MovieDTO> result = movieService.searchByTitle("NonExistent");
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenSearchingByGenreWithNoResults() {
+        when(movieRepository.findByGenre("Horror")).thenReturn(Arrays.asList());
+
+        List<MovieDTO> result = movieService.getByGenre("Horror");
+
+        assertTrue(result.isEmpty());
+    }
 }
