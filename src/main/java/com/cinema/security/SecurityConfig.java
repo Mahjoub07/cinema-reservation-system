@@ -34,11 +34,17 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/index.html", "/**").permitAll()
+                .requestMatchers("/ws/**", "/topic/**", "/app/**").permitAll()
                 .requestMatchers("/api/users/register", "/api/users/login").permitAll()
                 .requestMatchers("/api/movies/**").permitAll()
+                .requestMatchers("/api/bookings/verify/**").permitAll()
                 .requestMatchers("/api/bookings/**").authenticated()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/users/**").hasRole("ADMIN")
+                // Admin endpoints - both ADMIN and MAIN_ADMIN
+                .requestMatchers("/api/admin/stats", "/api/admin/users", "/api/admin/bookings").hasAnyRole("ADMIN", "MAIN_ADMIN")
+                .requestMatchers("/api/admin/movies/**").hasAnyRole("ADMIN", "MAIN_ADMIN")
+                .requestMatchers("/api/admin/create-admin").hasRole("MAIN_ADMIN")
+                // User management - MAIN_ADMIN only for sensitive ops
+                .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "MAIN_ADMIN")
                 .anyRequest().permitAll()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

@@ -88,3 +88,10 @@
     max-width: unset;
   }
 }
+
+/* Light Theme Overrides */
+[data-theme="light"] .toast {
+  background: rgba(0, 0, 0, 0.85);
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}

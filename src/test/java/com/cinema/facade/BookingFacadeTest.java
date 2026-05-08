@@ -16,11 +16,13 @@ import com.cinema.service.BookingService;
 import com.cinema.service.MovieService;
 import com.cinema.service.QRCodeService;
 import com.cinema.service.UserService;
+import com.cinema.websocket.SeatLockService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -47,6 +49,12 @@ class BookingFacadeTest {
 
     @Mock
     private PricingContext pricingContext;
+
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
+
+    @Mock
+    private SeatLockService seatLockService;
 
     private BookingService bookingService;
     private BookingFacade bookingFacade;
@@ -92,7 +100,9 @@ class BookingFacadeTest {
                 movieService,
                 userService,
                 qrCodeService,
-                pricingContext
+                pricingContext,
+                messagingTemplate,
+                seatLockService
         );
 
         bookingFacade = new BookingFacade(

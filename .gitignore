@@ -34,4 +34,13 @@ build/
 **/node_modules/
 *.timestamp-*.mjs
 frontend/dist/
-uploads/src/main/resources/application.properties
+### Logs ###
+app.log
+*.log
+
+### Environment ###
+.env
+*.env
+
+### Uploads ###
+uploads/

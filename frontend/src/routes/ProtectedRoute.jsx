@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -17,7 +17,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
     return <Navigate to="/login" />;
   }
 
-  if (requireAdmin && user.role !== 'ROLE_ADMIN') {
+  if (requireAdmin && !isAdmin()) {
     return <Navigate to="/movies" />;
   }
 

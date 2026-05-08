@@ -36,7 +36,7 @@ const MyBookings = () => {
     setCancelling(bookingId);
     try {
       await cancelBooking(bookingId);
-      setBookings(bookings.map(b =>
+      setBookings(prev => prev.map(b =>
         b.id === bookingId ? { ...b, status: 'CANCELLED' } : b
       ));
     } catch (err) {

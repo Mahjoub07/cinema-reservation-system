@@ -20,8 +20,9 @@ public class User {
     @Column(nullable = false)
     private String name;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String role; // "ROLE_USER" or "ROLE_ADMIN"
+    private Role role;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -32,6 +33,6 @@ public class User {
     public void setPassword(String password) { this.password = password; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
 }

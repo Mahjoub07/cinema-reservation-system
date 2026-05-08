@@ -16,11 +16,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
-@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     private final UserService userService;
@@ -37,13 +35,13 @@ public class AdminController {
     public ResponseEntity<DashboardStatsDTO> getDashboardStats() {
         long totalUsers = userService.findAll().size();
         long totalMovies = movieService.getAllMovies().size();
-        long totalBookings = bookingService.getAllBookings().size();
-        long activeBookings = bookingService.getAllBookings().stream()
+        List<BookingDTO> allBookings = bookingService.getAllBookings();
+        long totalBookings = allBookings.size();
+        long activeBookings = allBookings.stream()
                 .filter(b -> "CONFIRMED".equals(b.getStatus()))
                 .count();
 
-        DashboardStatsDTO stats = new DashboardStatsDTO(totalUsers, totalBookings, totalMovies, activeBookings);
-        return ResponseEntity.ok(stats);
+        return ResponseEntity.ok(new DashboardStatsDTO(totalUsers, totalBookings, totalMovies, activeBookings));
     }
 
     @GetMapping("/users")
@@ -57,9 +55,30 @@ public class AdminController {
     }
 
     @PostMapping("/create-admin")
+    @PreAuthorize("hasRole('MAIN_ADMIN')")
     public ResponseEntity<UserDTO> createAdmin(@Valid @RequestBody CreateAdminRequest request) {
         UserDTO admin = userService.createAdmin(request.getName(), request.getEmail(), request.getPassword());
         return ResponseEntity.ok(admin);
+    }
+
+    @PostMapping("/users/promote/{id}")
+    @PreAuthorize("hasRole('MAIN_ADMIN')")
+    public ResponseEntity<UserDTO> promoteUser(@PathVariable Long id) {
+        UserDTO user = userService.promoteUser(id);
+        return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/users/demote/{id}")
+    @PreAuthorize("hasRole('MAIN_ADMIN')")
+    public ResponseEntity<UserDTO> demoteUser(@PathVariable Long id) {
+        UserDTO user = userService.demoteUser(id);
+        return ResponseEntity.ok(user);
+    }
+
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 
     public static class CreateAdminRequest {

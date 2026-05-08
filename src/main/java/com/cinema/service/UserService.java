@@ -3,10 +3,14 @@ package com.cinema.service;
 import com.cinema.dto.RegisterRequestDTO;
 import com.cinema.dto.UserDTO;
 import com.cinema.exception.BadRequestException;
+import com.cinema.exception.ForbiddenOperationException;
 import com.cinema.exception.ResourceNotFoundException;
+import com.cinema.model.Role;
 import com.cinema.model.User;
 import com.cinema.repository.UserRepository;
 import com.cinema.security.JwtUtil;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +42,7 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setName(request.getName());
-        user.setRole("ROLE_USER");
+        user.setRole(Role.ROLE_USER);
 
         User savedUser = userRepository.save(user);
         return convertToDTO(savedUser);
@@ -53,7 +57,7 @@ public class UserService {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setName(name);
-        user.setRole("ROLE_ADMIN");
+        user.setRole(Role.ROLE_ADMIN);
 
         User savedUser = userRepository.save(user);
         return convertToDTO(savedUser);
@@ -67,7 +71,7 @@ public class UserService {
             throw new BadRequestException("Invalid password");
         }
 
-        return jwtUtil.generateToken(email, user.getRole());
+        return jwtUtil.generateToken(email, user.getRole().name());
     }
 
     public Optional<User> findByEmail(String email) {
@@ -80,19 +84,90 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public UserDTO updateUserRole(Long id, String role) {
-        User user = userRepository.findById(id)
+    // Promote USER to ADMIN - only MAIN_ADMIN
+    public UserDTO promoteUser(Long targetUserId) {
+        User currentUser = getCurrentAuthenticatedUser();
+        if (currentUser.getRole() != Role.ROLE_MAIN_ADMIN) {
+            throw new ForbiddenOperationException("Only MAIN_ADMIN can promote users to admin");
+        }
+
+        User targetUser = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        user.setRole(role);
-        User savedUser = userRepository.save(user);
-        return convertToDTO(savedUser);
+
+        if (targetUser.getRole() == Role.ROLE_MAIN_ADMIN) {
+            throw new ForbiddenOperationException("Cannot modify MAIN_ADMIN role");
+        }
+        if (targetUser.getRole() == Role.ROLE_ADMIN) {
+            throw new BadRequestException("User is already an ADMIN");
+        }
+
+        targetUser.setRole(Role.ROLE_ADMIN);
+        return convertToDTO(userRepository.save(targetUser));
     }
 
-    public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+    // Demote ADMIN to USER - only MAIN_ADMIN
+    public UserDTO demoteUser(Long targetUserId) {
+        User currentUser = getCurrentAuthenticatedUser();
+        if (currentUser.getRole() != Role.ROLE_MAIN_ADMIN) {
+            throw new ForbiddenOperationException("Only MAIN_ADMIN can demote admins");
+        }
+
+        User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (targetUser.getRole() == Role.ROLE_MAIN_ADMIN) {
+            throw new ForbiddenOperationException("Cannot modify MAIN_ADMIN role");
+        }
+        if (targetUser.getRole() == Role.ROLE_USER) {
+            throw new BadRequestException("User is already a regular USER");
+        }
+
+        targetUser.setRole(Role.ROLE_USER);
+        return convertToDTO(userRepository.save(targetUser));
+    }
+
+    // Delete user with proper role checks
+    public void deleteUser(Long targetUserId) {
+        User currentUser = getCurrentAuthenticatedUser();
+        User targetUser = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Self-protection
+        if (currentUser.getId().equals(targetUserId)) {
+            throw new ForbiddenOperationException("You cannot delete yourself");
+        }
+
+        // MAIN_ADMIN cannot be deleted
+        if (targetUser.getRole() == Role.ROLE_MAIN_ADMIN) {
+            throw new ForbiddenOperationException("MAIN_ADMIN cannot be deleted");
+        }
+
+        // ADMIN can only delete USERs
+        if (currentUser.getRole() == Role.ROLE_ADMIN) {
+            if (targetUser.getRole() != Role.ROLE_USER) {
+                throw new ForbiddenOperationException("Admins can only delete regular users");
+            }
+        }
+
+        // MAIN_ADMIN can delete USER and ADMIN
+        if (currentUser.getRole() != Role.ROLE_MAIN_ADMIN && currentUser.getRole() != Role.ROLE_ADMIN) {
+            throw new ForbiddenOperationException("Insufficient permissions to delete user");
+        }
+
+        userRepository.deleteById(targetUserId);
+    }
+
+    private User getCurrentAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new ForbiddenOperationException("Not authenticated");
+        }
+        String email = authentication.getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found"));
     }
 
     private UserDTO convertToDTO(User user) {
-        return new UserDTO(user.getId(), user.getEmail(), user.getName(), user.getRole());
+        return new UserDTO(user.getId(), user.getEmail(), user.getName(), user.getRole().name());
     }
 }

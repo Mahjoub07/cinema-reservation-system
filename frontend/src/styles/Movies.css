@@ -236,7 +236,7 @@
 .movies-hero h1 {
   font-size: 2.2rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--text-primary);
   letter-spacing: -1px;
   margin-bottom: 8px;
 }
@@ -648,4 +648,277 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .hero-banner {
+  background: var(--bg-secondary);
+}
+
+[data-theme="light"] .hero-poster-side {
+  background: var(--bg-tertiary);
+}
+
+[data-theme="light"] .hero-info-side::before {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
+}
+
+[data-theme="light"] .hero-title {
+  color: var(--text-primary);
+  text-shadow: none;
+}
+
+[data-theme="light"] .hero-description {
+  color: var(--text-secondary);
+  text-shadow: none;
+}
+
+[data-theme="light"] .hero-meta {
+  color: var(--text-muted);
+  text-shadow: none;
+}
+
+[data-theme="light"] .movies-hero h1 {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .movies-hero p {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .search-input {
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+[data-theme="light"] .genre-select {
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+[data-theme="light"] .movie-card {
+  background: linear-gradient(180deg, var(--bg-glass) 0%, rgba(0,0,0,0.01) 100%);
+  border-color: var(--border-subtle);
+}
+
+[data-theme="light"] .movie-poster {
+  background: var(--bg-secondary);
+}
+
+[data-theme="light"] .poster-fallback {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .movie-title {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .movie-duration,
+[data-theme="light"] .movie-time {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .movie-price {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .movie-description {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .overlay-btn {
+  background: var(--bg-glass-hover);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+/* Watchlist Heart Button */
+.watchlist-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 5;
+  padding: 0;
+}
+
+.watchlist-btn:hover {
+  background: rgba(229, 9, 20, 0.8);
+  border-color: rgba(229, 9, 20, 0.5);
+  transform: scale(1.15);
+}
+
+.watchlist-btn.active {
+  background: rgba(229, 9, 20, 0.9);
+  border-color: var(--brand-red);
+  color: #fff;
+}
+
+.watchlist-btn.active:hover {
+  background: rgba(229, 9, 20, 0.7);
+}
+
+.watchlist-btn svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.watchlist-btn:active svg {
+  transform: scale(1.4);
+}
+
+[data-theme="light"] .watchlist-btn {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: var(--border-medium);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .watchlist-btn:hover {
+  background: rgba(229, 9, 20, 0.8);
+  color: #fff;
+}
+
+[data-theme="light"] .watchlist-btn.active {
+  background: var(--brand-red);
+  color: #fff;
+}
+
+@keyframes heartPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+.watchlist-btn.pop svg {
+  animation: heartPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* WebSocket Seat Styles */
+.seat.locked {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+  border-color: rgba(255, 152, 0, 0.5);
+  cursor: not-allowed;
+  animation: lockedPulse 1.5s ease-in-out infinite;
+}
+
+.seat.locked-by-me {
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+  border-color: rgba(156, 39, 176, 0.5);
+  cursor: pointer;
+}
+
+@keyframes lockedPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.seat-legend .seat-sample.locked {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+}
+
+.seat-legend .seat-sample.locked-by-me {
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+}
+
+[data-theme="light"] .seat.locked {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+}
+
+[data-theme="light"] .seat.locked-by-me {
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+}
+
+.reservation-timer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(229, 9, 20, 0.12), rgba(229, 9, 20, 0.05));
+  border: 1px solid rgba(229, 9, 20, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--brand-red);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: var(--space-lg);
+  animation: timerPulse 1s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.reservation-timer.warning {
+  background: linear-gradient(135deg, rgba(255, 165, 0, 0.15), rgba(255, 165, 0, 0.05));
+  border-color: rgba(255, 165, 0, 0.3);
+  color: var(--accent-warning);
+}
+
+[data-theme="light"] .reservation-timer {
+  background: linear-gradient(135deg, rgba(229, 9, 20, 0.08), rgba(229, 9, 20, 0.03));
+}
+
+.ws-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  margin-bottom: var(--space-md);
+}
+
+.ws-status.connected {
+  background: var(--accent-success-bg);
+  color: var(--accent-success);
+}
+
+.ws-status.disconnected {
+  background: var(--accent-error-bg);
+  color: var(--accent-error);
+}
+
+.ws-status.reconnecting {
+  background: rgba(255, 165, 0, 0.15);
+  color: var(--accent-warning);
+}
+
+.ws-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: wsPulse 2s ease-in-out infinite;
+}
+
+.ws-status.connected .ws-indicator {
+  background: var(--accent-success);
+}
+
+.ws-status.disconnected .ws-indicator {
+  background: var(--accent-error);
+  animation: none;
+}
+
+.ws-status.reconnecting .ws-indicator {
+  background: var(--accent-warning);
+}
+
+@keyframes wsPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
 }

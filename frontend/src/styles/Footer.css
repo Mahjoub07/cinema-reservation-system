@@ -62,3 +62,17 @@
     gap: 12px;
   }
 }
+
+/* Light Theme Overrides */
+[data-theme="light"] .footer {
+  background: rgba(255, 255, 255, 0.95);
+  border-top-color: var(--border-subtle);
+}
+
+[data-theme="light"] .footer-copy {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .footer-links a {
+  color: var(--text-muted);
+}

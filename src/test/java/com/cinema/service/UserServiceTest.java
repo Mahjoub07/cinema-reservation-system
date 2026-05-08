@@ -3,16 +3,22 @@ package com.cinema.service;
 import com.cinema.dto.RegisterRequestDTO;
 import com.cinema.dto.UserDTO;
 import com.cinema.exception.BadRequestException;
+import com.cinema.exception.ForbiddenOperationException;
 import com.cinema.exception.ResourceNotFoundException;
+import com.cinema.model.Role;
 import com.cinema.model.User;
 import com.cinema.repository.UserRepository;
 import com.cinema.security.JwtUtil;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -46,7 +52,7 @@ class UserServiceTest {
         user.setName("Mahjoub");
         user.setEmail("mahjoub@cinema.com");
         user.setPassword("password123");
-        user.setRole("ROLE_USER");
+        user.setRole(Role.ROLE_USER);
 
         userDTO = new UserDTO(1L, "mahjoub@cinema.com", "Mahjoub", "ROLE_USER");
         registerRequest = new RegisterRequestDTO("Mahjoub", "mahjoub@cinema.com", "password123");
@@ -81,7 +87,7 @@ class UserServiceTest {
         user.setPassword("encodedPassword");
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(any(), any())).thenReturn(true);
-        when(jwtUtil.generateToken(user.getEmail(), user.getRole())).thenReturn("jwt-token");
+        when(jwtUtil.generateToken(user.getEmail(), user.getRole().name())).thenReturn("jwt-token");
 
         String token = userService.login("mahjoub@cinema.com", "password123");
 
@@ -122,11 +128,28 @@ class UserServiceTest {
 
     @Test
     void shouldDeleteUser() {
+        User currentUser = new User();
+        currentUser.setId(99L);
+        currentUser.setEmail("admin@cinema.com");
+        currentUser.setRole(Role.ROLE_ADMIN);
+
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                currentUser.getEmail(), null, java.util.List.of()
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        when(userRepository.findByEmail(currentUser.getEmail())).thenReturn(Optional.of(currentUser));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         doNothing().when(userRepository).deleteById(1L);
 
         userService.deleteUser(1L);
 
         verify(userRepository, times(1)).deleteById(1L);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -155,5 +178,184 @@ class UserServiceTest {
 
         assertEquals("Email already in use", exception.getMessage());
         verify(userRepository, never()).save(any());
+    }
+
+    // --- Promote User Tests ---
+
+    private void setAuthContext(String email, Role role) {
+        User authUser = new User();
+        authUser.setId(99L);
+        authUser.setEmail(email);
+        authUser.setRole(role);
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                email, null, java.util.List.of()
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(authUser));
+    }
+
+    @Test
+    void shouldPromoteUserToAdmin() {
+        setAuthContext("main@cinema.com", Role.ROLE_MAIN_ADMIN);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UserDTO result = userService.promoteUser(1L);
+
+        assertNotNull(result);
+        assertEquals("ROLE_ADMIN", result.getRole());
+    }
+
+    @Test
+    void shouldThrowWhenNonMainAdminPromotesUser() {
+        setAuthContext("admin@cinema.com", Role.ROLE_ADMIN);
+
+        ForbiddenOperationException exception = assertThrows(ForbiddenOperationException.class,
+                () -> userService.promoteUser(1L));
+        assertEquals("Only MAIN_ADMIN can promote users to admin", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenPromotingMainAdmin() {
+        setAuthContext("main@cinema.com", Role.ROLE_MAIN_ADMIN);
+        User mainAdmin = new User();
+        mainAdmin.setId(2L);
+        mainAdmin.setRole(Role.ROLE_MAIN_ADMIN);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(mainAdmin));
+
+        ForbiddenOperationException exception = assertThrows(ForbiddenOperationException.class,
+                () -> userService.promoteUser(2L));
+        assertEquals("Cannot modify MAIN_ADMIN role", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenPromotingAlreadyAdmin() {
+        setAuthContext("main@cinema.com", Role.ROLE_MAIN_ADMIN);
+        user.setRole(Role.ROLE_ADMIN);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> userService.promoteUser(1L));
+        assertEquals("User is already an ADMIN", exception.getMessage());
+    }
+
+    // --- Demote User Tests ---
+
+    @Test
+    void shouldDemoteAdminToUser() {
+        setAuthContext("main@cinema.com", Role.ROLE_MAIN_ADMIN);
+        user.setRole(Role.ROLE_ADMIN);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UserDTO result = userService.demoteUser(1L);
+
+        assertNotNull(result);
+        assertEquals("ROLE_USER", result.getRole());
+    }
+
+    @Test
+    void shouldThrowWhenNonMainAdminDemotesUser() {
+        setAuthContext("admin@cinema.com", Role.ROLE_ADMIN);
+
+        ForbiddenOperationException exception = assertThrows(ForbiddenOperationException.class,
+                () -> userService.demoteUser(1L));
+        assertEquals("Only MAIN_ADMIN can demote admins", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenDemotingMainAdmin() {
+        setAuthContext("main@cinema.com", Role.ROLE_MAIN_ADMIN);
+        User mainAdmin = new User();
+        mainAdmin.setId(2L);
+        mainAdmin.setRole(Role.ROLE_MAIN_ADMIN);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(mainAdmin));
+
+        ForbiddenOperationException exception = assertThrows(ForbiddenOperationException.class,
+                () -> userService.demoteUser(2L));
+        assertEquals("Cannot modify MAIN_ADMIN role", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenDemotingAlreadyUser() {
+        setAuthContext("main@cinema.com", Role.ROLE_MAIN_ADMIN);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> userService.demoteUser(1L));
+        assertEquals("User is already a regular USER", exception.getMessage());
+    }
+
+    // --- Delete User Tests ---
+
+    @Test
+    void shouldDeleteUserAsAdmin() {
+        setAuthContext("admin@cinema.com", Role.ROLE_ADMIN);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        doNothing().when(userRepository).deleteById(1L);
+
+        userService.deleteUser(1L);
+
+        verify(userRepository).deleteById(1L);
+    }
+
+    @Test
+    void shouldDeleteAdminAsMainAdmin() {
+        setAuthContext("main@cinema.com", Role.ROLE_MAIN_ADMIN);
+        user.setRole(Role.ROLE_ADMIN);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        doNothing().when(userRepository).deleteById(1L);
+
+        userService.deleteUser(1L);
+
+        verify(userRepository).deleteById(1L);
+    }
+
+    @Test
+    void shouldThrowWhenDeletingSelf() {
+        User selfUser = new User();
+        selfUser.setId(1L);
+        selfUser.setEmail("mahjoub@cinema.com");
+        selfUser.setRole(Role.ROLE_ADMIN);
+
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                "mahjoub@cinema.com", null, java.util.List.of()
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        when(userRepository.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(selfUser));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(selfUser));
+
+        ForbiddenOperationException exception = assertThrows(ForbiddenOperationException.class,
+                () -> userService.deleteUser(1L));
+        assertEquals("You cannot delete yourself", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenDeletingMainAdmin() {
+        setAuthContext("main@cinema.com", Role.ROLE_MAIN_ADMIN);
+        User mainAdmin = new User();
+        mainAdmin.setId(2L);
+        mainAdmin.setRole(Role.ROLE_MAIN_ADMIN);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(mainAdmin));
+
+        ForbiddenOperationException exception = assertThrows(ForbiddenOperationException.class,
+                () -> userService.deleteUser(2L));
+        assertEquals("MAIN_ADMIN cannot be deleted", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenAdminDeletesAnotherAdmin() {
+        setAuthContext("admin@cinema.com", Role.ROLE_ADMIN);
+        user.setRole(Role.ROLE_ADMIN);
+        User currentAdmin = new User();
+        currentAdmin.setId(99L);
+        currentAdmin.setEmail("admin@cinema.com");
+        currentAdmin.setRole(Role.ROLE_ADMIN);
+        when(userRepository.findByEmail("admin@cinema.com")).thenReturn(Optional.of(currentAdmin));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        ForbiddenOperationException exception = assertThrows(ForbiddenOperationException.class,
+                () -> userService.deleteUser(1L));
+        assertEquals("Admins can only delete regular users", exception.getMessage());
     }
 }
