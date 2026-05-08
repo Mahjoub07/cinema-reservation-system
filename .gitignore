@@ -34,4 +34,4 @@ build/
 **/node_modules/
 *.timestamp-*.mjs
 frontend/dist/
-uploads/
+uploads/src/main/resources/application.properties
