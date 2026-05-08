@@ -8,7 +8,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -59,9 +58,16 @@ public class MovieController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/bulk")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> bulkDeleteMovies(@RequestBody List<Long> ids) {
+        movieService.bulkDeleteMovies(ids);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/upload-poster")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, String>> uploadPoster(@RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<Map<String, String>> uploadPoster(@RequestParam("file") MultipartFile file) {
         String url = movieService.uploadPoster(file);
         return ResponseEntity.ok(Map.of("url", url));
     }

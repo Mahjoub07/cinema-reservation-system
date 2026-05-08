@@ -1,6 +1,7 @@
 package com.cinema.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class BookingDTO {
     private Long id;
@@ -12,11 +13,14 @@ public class BookingDTO {
     private LocalDateTime bookingDate;
     private String status;
     private Double totalPrice;
+    private List<Integer> seatNumbers;
+    private LocalDateTime showTime;
+    private String verificationToken;
 
     public BookingDTO() {}
 
     public BookingDTO(Long id, Long userId, String userEmail, Long movieId,
-                     String movieTitle, Integer numberOfSeats, LocalDateTime bookingDate, String status, Double totalPrice) {
+                     String movieTitle, Integer numberOfSeats, LocalDateTime bookingDate, String status, Double totalPrice, List<Integer> seatNumbers, LocalDateTime showTime, String verificationToken) {
         this.id = id;
         this.userId = userId;
         this.userEmail = userEmail;
@@ -26,6 +30,9 @@ public class BookingDTO {
         this.bookingDate = bookingDate;
         this.status = status;
         this.totalPrice = totalPrice;
+        this.seatNumbers = seatNumbers;
+        this.showTime = showTime;
+        this.verificationToken = verificationToken;
     }
 
     public Long getId() { return id; }
@@ -46,4 +53,10 @@ public class BookingDTO {
     public void setStatus(String status) { this.status = status; }
     public Double getTotalPrice() { return totalPrice; }
     public void setTotalPrice(Double totalPrice) { this.totalPrice = totalPrice; }
+    public List<Integer> getSeatNumbers() { return seatNumbers; }
+    public void setSeatNumbers(List<Integer> seatNumbers) { this.seatNumbers = seatNumbers; }
+    public LocalDateTime getShowTime() { return showTime; }
+    public void setShowTime(LocalDateTime showTime) { this.showTime = showTime; }
+    public String getVerificationToken() { return verificationToken; }
+    public void setVerificationToken(String verificationToken) { this.verificationToken = verificationToken; }
 }
