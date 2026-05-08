@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CineReserve</title>
+  <script>
+    // GitHub Pages SPA redirect: preserve the route in the hash
+    const segment = '/cinema-reservation-system';
+    const path = window.location.pathname;
+    if (path.startsWith(segment)) {
+      const route = path.slice(segment.length);
+      const redirect = segment + '/#' + route + window.location.search + window.location.hash;
+      window.location.replace(redirect);
+    } else {
+      window.location.replace('/cinema-reservation-system/');
+    }
+  </script>
+</head>
+<body>
+  Redirecting...
+</body>
+</html>
