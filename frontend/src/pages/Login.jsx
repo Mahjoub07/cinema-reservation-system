@@ -63,29 +63,27 @@ const Login = () => {
           {error && <div className="error-message">{error}</div>}
 
           <form onSubmit={handleSubmit} className="auth-form">
-            <div className="form-group floating">
+            <div className="form-group glass">
               <input
                 id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder=" "
+                placeholder="Email address"
                 disabled={loading}
                 required
               />
-              <label htmlFor="login-email">Email</label>
             </div>
-            <div className="form-group floating">
+            <div className="form-group glass">
               <input
                 id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder=" "
+                placeholder="Password"
                 disabled={loading}
                 required
               />
-              <label htmlFor="login-password">Password</label>
             </div>
             <button type="submit" className="btn btn-primary btn-lg auth-submit" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
