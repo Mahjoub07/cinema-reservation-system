@@ -85,6 +85,38 @@ class MovieControllerTest {
     }
 
     @Test
+    void shouldGetMoviesByGenre() {
+        when(movieService.getByGenre("Sci-Fi")).thenReturn(Arrays.asList(movieDTO));
+
+        List<MovieDTO> result = movieController.getMoviesByGenre("Sci-Fi").getBody();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Inception", result.get(0).getTitle());
+    }
+
+    @Test
+    void shouldUpdateMovie() {
+        when(movieService.updateMovie(eq(1L), any(MovieDTO.class))).thenReturn(movieDTO);
+
+        MovieDTO result = movieController.updateMovie(1L, movieDTO).getBody();
+
+        assertNotNull(result);
+        assertEquals("Inception", result.getTitle());
+        verify(movieService, times(1)).updateMovie(1L, movieDTO);
+    }
+
+    @Test
+    void shouldBulkDeleteMovies() {
+        doNothing().when(movieService).bulkDeleteMovies(anyList());
+
+        var response = movieController.bulkDeleteMovies(Arrays.asList(1L, 2L));
+
+        assertEquals(204, response.getStatusCode().value());
+        verify(movieService, times(1)).bulkDeleteMovies(Arrays.asList(1L, 2L));
+    }
+
+    @Test
     void shouldUploadPoster() throws Exception {
         org.springframework.web.multipart.MultipartFile file = mock(org.springframework.web.multipart.MultipartFile.class);
         when(movieService.uploadPoster(file)).thenReturn("/uploads/posters/test.jpg");

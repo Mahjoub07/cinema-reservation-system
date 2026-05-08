@@ -11,6 +11,7 @@ import MovieDetails from './pages/MovieDetails';
 import Booking from './pages/Booking';
 import MyBookings from './pages/MyBookings';
 import Admin from './pages/Admin';
+import VerifyBooking from './pages/VerifyBooking';
 import './styles/App.css';
 import './styles/Toast.css';
 
@@ -29,17 +30,20 @@ function AnimatedRoutes() {
           <Route path="/booking/:id" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
           <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
+          <Route path="/verify/:bookingId" element={<VerifyBooking />} />
         </Routes>
       </div>
     </main>
   );
 }
 
+const basename = import.meta.env.BASE_URL?.replace(/\/$/, '') || '/';
+
 function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <Router>
+        <Router basename={basename}>
           <div className="app">
             <Header />
             <AnimatedRoutes />

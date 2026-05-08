@@ -1,5 +1,7 @@
 package com.cinema.controller;
 
+import com.cinema.dto.BookingDTO;
+import com.cinema.dto.DashboardStatsDTO;
 import com.cinema.dto.UserDTO;
 import com.cinema.service.BookingService;
 import com.cinema.service.MovieService;
@@ -11,7 +13,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -75,5 +79,59 @@ class AdminControllerTest {
                 .thenThrow(new RuntimeException("Validation failed"));
 
         assertThrows(RuntimeException.class, () -> adminController.createAdmin(createAdminRequest));
+    }
+
+    @Test
+    void shouldGetAllBookings() {
+        BookingDTO bookingDTO = new BookingDTO(1L, 1L, "user@test.com", 1L, "Inception", 2, LocalDateTime.now(), "CONFIRMED", 25.0, List.of(1, 2), LocalDateTime.now().plusDays(1), "token");
+        when(bookingService.getAllBookings()).thenReturn(Arrays.asList(bookingDTO));
+
+        var response = adminController.getAllBookings();
+
+        assertNotNull(response);
+        assertEquals(1, response.getBody().size());
+    }
+
+    @Test
+    void shouldGetDashboardStats() {
+        when(userService.findAll()).thenReturn(Arrays.asList(adminDTO));
+        when(movieService.getAllMovies()).thenReturn(Arrays.asList());
+        when(bookingService.getAllBookings()).thenReturn(Arrays.asList());
+
+        var response = adminController.getDashboardStats();
+
+        assertNotNull(response);
+        DashboardStatsDTO stats = response.getBody();
+        assertEquals(1, stats.getTotalUsers());
+        assertEquals(0, stats.getTotalBookings());
+        assertEquals(0, stats.getTotalMovies());
+        assertEquals(0, stats.getActiveBookings());
+    }
+
+    @Test
+    void shouldGetDashboardStatsWithActiveBookings() {
+        BookingDTO active = new BookingDTO(1L, 1L, "user@test.com", 1L, "Inception", 2, LocalDateTime.now(), "CONFIRMED", 25.0, List.of(1, 2), LocalDateTime.now().plusDays(1), "token");
+        BookingDTO cancelled = new BookingDTO(2L, 1L, "user@test.com", 1L, "Inception", 1, LocalDateTime.now(), "CANCELLED", 12.5, List.of(), LocalDateTime.now().plusDays(1), "token2");
+        when(userService.findAll()).thenReturn(Arrays.asList());
+        when(movieService.getAllMovies()).thenReturn(Arrays.asList());
+        when(bookingService.getAllBookings()).thenReturn(Arrays.asList(active, cancelled));
+
+        var response = adminController.getDashboardStats();
+
+        assertNotNull(response);
+        assertEquals(2, response.getBody().getTotalBookings());
+        assertEquals(1, response.getBody().getActiveBookings());
+    }
+
+    @Test
+    void shouldCreateAdminRequestGettersAndSetters() {
+        AdminController.CreateAdminRequest request = new AdminController.CreateAdminRequest();
+        request.setName("Admin");
+        request.setEmail("admin@test.com");
+        request.setPassword("password123");
+
+        assertEquals("Admin", request.getName());
+        assertEquals("admin@test.com", request.getEmail());
+        assertEquals("password123", request.getPassword());
     }
 }

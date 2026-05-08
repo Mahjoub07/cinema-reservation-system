@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { createBooking, downloadTicket } from '../api/bookings';
+import { createBooking, downloadTicket, getBookedSeats } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Booking.css';
 
@@ -8,8 +8,10 @@ const TOTAL_SEATS = 64; // 8x8 grid for visual seat picker
 
 const Booking = () => {
   const [selectedSeats, setSelectedSeats] = useState(new Set());
+  const [takenSeats, setTakenSeats] = useState(new Set());
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fetchingSeats, setFetchingSeats] = useState(true);
   const [success, setSuccess] = useState(false);
   const [bookingResult, setBookingResult] = useState(null);
 
@@ -23,20 +25,29 @@ const Booking = () => {
     return null;
   }
 
-  // Simulate taken seats based on availableSeats vs total capacity
-  const takenSeats = useMemo(() => {
-    const taken = new Set();
-    const takenCount = Math.max(0, TOTAL_SEATS - (movie.availableSeats || 0));
-    let count = 0;
-    for (let i = 0; i < TOTAL_SEATS && count < takenCount; i++) {
-      // Deterministic "random" pattern
-      if ((i * 7 + 3) % 5 !== 0) {
-        taken.add(i);
-        count++;
-      }
+  const fetchBookedSeats = useCallback(async () => {
+    try {
+      const data = await getBookedSeats(movie.id, movie.showTime);
+      setTakenSeats(new Set(data.bookedSeats || []));
+    } catch (err) {
+      // silently ignore — keep whatever we already have
+    } finally {
+      setFetchingSeats(false);
     }
-    return taken;
-  }, [movie.availableSeats]);
+  }, [movie.id, movie.showTime]);
+
+  useEffect(() => {
+    fetchBookedSeats();
+  }, [fetchBookedSeats]);
+
+  // Auto-refresh booked seats every 10 seconds
+  useEffect(() => {
+    if (success) return;
+    const interval = setInterval(() => {
+      fetchBookedSeats();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [fetchBookedSeats, success]);
 
   const toggleSeat = (index) => {
     if (takenSeats.has(index)) return;
@@ -54,6 +65,8 @@ const Booking = () => {
 
   const seats = selectedSeats.size;
   const totalPrice = (movie.price || 0) * seats;
+  const seatList = Array.from(selectedSeats).sort((a, b) => a - b);
+  const seatNumbersText = seatList.map(i => i + 1).join(', ');
 
   const validateForm = () => {
     if (seats <= 0) {
@@ -67,19 +80,37 @@ const Booking = () => {
     return true;
   };
 
+  // Submit booking request to backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (!validateForm()) return;
 
+    // Ensure movie has a show time set (required for booking)
+    if (!movie.showTime) {
+      setError('This movie has no show time set. Please contact admin.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const result = await createBooking(movie.id, seats);
+      const result = await createBooking(movie.id, seatList, movie.showTime);
       setBookingResult(result);
       setSuccess(true);
     } catch (err) {
-      setError(err.response?.data?.message || 'Booking failed');
+      const msg = err.response?.data?.message || err.message || 'Booking failed';
+      setError(msg);
+      // Refresh booked seats in case conflict came from another user
+      fetchBookedSeats();
+      // Deselect any newly-taken seats
+      setSelectedSeats(prev => {
+        const next = new Set(prev);
+        for (const s of next) {
+          if (takenSeats.has(s)) next.delete(s);
+        }
+        return next;
+      });
     } finally {
       setLoading(false);
     }
@@ -99,7 +130,7 @@ const Booking = () => {
             </div>
             <div className="confirmation-row">
               <span>Seats</span>
-              <span>{bookingResult?.numberOfSeats || seats}</span>
+              <span>#{seatNumbersText}</span>
             </div>
             <div className="confirmation-row">
               <span>Total</span>
@@ -132,6 +163,11 @@ const Booking = () => {
 
         <div className="seat-section">
           <div className="screen">Screen</div>
+          {fetchingSeats && (
+            <div style={{ color: '#888', fontSize: '0.85rem', marginBottom: '12px' }}>
+              Loading seat availability...
+            </div>
+          )}
           <div className="seat-grid">
             {Array.from({ length: TOTAL_SEATS }).map((_, i) => {
               const isTaken = takenSeats.has(i);
@@ -142,7 +178,7 @@ const Booking = () => {
                   type="button"
                   className={`seat ${isTaken ? 'taken' : ''} ${isSelected ? 'selected' : ''}`}
                   onClick={() => toggleSeat(i)}
-                  disabled={isTaken || loading}
+                  disabled={isTaken || loading || fetchingSeats}
                   aria-label={`Seat ${i + 1} ${isTaken ? 'taken' : isSelected ? 'selected' : 'available'}`}
                 />
               );
@@ -173,7 +209,10 @@ const Booking = () => {
           </div>
           <div className="summary-row">
             <span>Selected</span>
-            <span>{seats} seat{seats !== 1 ? 's' : ''}</span>
+            <span>
+              {seats} seat{seats !== 1 ? 's' : ''}
+              {seats > 0 && <small style={{ color: '#888', display: 'block' }}>#{seatNumbersText}</small>}
+            </span>
           </div>
           <div className="summary-divider" />
           <div className="summary-row total">
@@ -184,7 +223,7 @@ const Booking = () => {
             <button
               type="submit"
               className="btn btn-primary btn-lg"
-              disabled={loading || seats === 0}
+              disabled={loading || seats === 0 || fetchingSeats}
               style={{ width: '100%', marginTop: '16px' }}
             >
               {loading ? 'Processing...' : 'Confirm Booking'}

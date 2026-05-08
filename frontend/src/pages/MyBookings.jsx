@@ -97,7 +97,11 @@ const MyBookings = () => {
               <div className="booking-meta">
                 <div className="meta-block">
                   <span className="meta-label">Seats</span>
-                  <span className="meta-value">{booking.numberOfSeats}</span>
+                  <span className="meta-value">
+                    {booking.seatNumbers && booking.seatNumbers.length > 0
+                      ? '#' + booking.seatNumbers.map(s => s + 1).join(', ')
+                      : booking.numberOfSeats}
+                  </span>
                 </div>
                 <div className="meta-block">
                   <span className="meta-label">Date</span>

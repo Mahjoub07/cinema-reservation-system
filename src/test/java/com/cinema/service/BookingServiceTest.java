@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -66,8 +67,13 @@ class BookingServiceTest {
         booking.setNumberOfSeats(2);
         booking.setStatus("CONFIRMED");
         booking.setTotalPrice(25.0);
+        booking.setVerificationToken("test-token-123");
 
-        bookingRequest = new BookingRequestDTO(1L, 2);
+        LocalDateTime showTime = LocalDateTime.now().plusDays(1);
+        bookingRequest = new BookingRequestDTO(1L, 2, List.of(1, 2), showTime);
+
+        lenient().when(bookingRepository.findByMovieIdAndStatus(any(), eq("CONFIRMED")))
+                .thenReturn(List.of());
     }
 
     @Test
@@ -119,12 +125,84 @@ class BookingServiceTest {
     }
 
     @Test
+    void shouldThrowExceptionWhenSeatsAreNull() {
+        BookingRequestDTO request = new BookingRequestDTO(1L, null, null, LocalDateTime.now().plusDays(1));
+        when(movieService.getMovieById(1L)).thenReturn(movie);
+        when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
+
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> bookingService.createBooking("mahjoub@cinema.com", request));
+
+        assertEquals("At least one seat must be selected", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenSeatsAreEmpty() {
+        BookingRequestDTO request = new BookingRequestDTO(1L, 0, List.of(), LocalDateTime.now().plusDays(1));
+        when(movieService.getMovieById(1L)).thenReturn(movie);
+        when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
+
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> bookingService.createBooking("mahjoub@cinema.com", request));
+
+        assertEquals("At least one seat must be selected", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenShowTimeIsNull() {
+        BookingRequestDTO request = new BookingRequestDTO(1L, 2, List.of(1, 2), null);
+        when(movieService.getMovieById(1L)).thenReturn(movie);
+        when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
+
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> bookingService.createBooking("mahjoub@cinema.com", request));
+
+        assertEquals("Show time is required", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenSeatsConflict() {
+        Booking conflictBooking = new Booking();
+        conflictBooking.setSeatNumbers("1,2");
+        when(movieService.getMovieById(1L)).thenReturn(movie);
+        when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
+        when(bookingRepository.findByMovieIdAndShowTimeAndStatus(any(), any(), eq("CONFIRMED")))
+                .thenReturn(List.of(conflictBooking));
+
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> bookingService.createBooking("mahjoub@cinema.com", bookingRequest));
+
+        assertTrue(exception.getMessage().contains("Seats already booked"));
+    }
+
+    @Test
+    void shouldCreateBookingSuccessfullyEvenWhenQrCodeFails() throws Exception {
+        QRCodeService mockQrService = mock(QRCodeService.class);
+        PricingContext realPricing = new PricingContext(List.of());
+        BookingService service = new BookingService(bookingRepository, movieService, userService, mockQrService, realPricing);
+
+        when(movieService.getMovieById(1L)).thenReturn(movie);
+        when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
+            Booking b = inv.getArgument(0);
+            b.setId(1L);
+            return b;
+        });
+        doThrow(new RuntimeException("QR error")).when(mockQrService).generateQRCode(any(), any(), any(), anyInt());
+
+        BookingDTO result = service.createBooking("mahjoub@cinema.com", bookingRequest);
+
+        assertNotNull(result);
+        assertEquals("CONFIRMED", result.getStatus());
+    }
+
+    @Test
     void shouldThrowExceptionWhenNotEnoughSeats() {
         movie.setAvailableSeats(1);
         when(movieService.getMovieById(1L)).thenReturn(movie);
         when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        BadRequestException exception = assertThrows(BadRequestException.class,
                 () -> bookingService.createBooking("mahjoub@cinema.com", bookingRequest));
 
         assertEquals("Not enough seats available", exception.getMessage());
@@ -259,5 +337,58 @@ class BookingServiceTest {
         verify(movieService, times(1)).updateMovieSeats(movie);
         assertEquals("CANCELLED", booking.getStatus());
         assertEquals(102, movie.getAvailableSeats()); // 100 + 2
+    }
+
+    @Test
+    void shouldBulkDeleteBookings() {
+        Booking booking2 = new Booking();
+        booking2.setId(2L);
+        booking2.setUser(user);
+        booking2.setMovie(movie);
+        booking2.setNumberOfSeats(2);
+        booking2.setStatus("CONFIRMED");
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findById(2L)).thenReturn(Optional.of(booking2));
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        bookingService.bulkDeleteBookings(Arrays.asList(1L, 2L));
+
+        assertEquals("CANCELLED", booking.getStatus());
+        assertEquals("CANCELLED", booking2.getStatus());
+        verify(bookingRepository, times(2)).save(any(Booking.class));
+    }
+
+    @Test
+    void shouldGetBookedSeatNumbersWithNullAndEmptySeats() {
+        Booking b1 = new Booking();
+        b1.setSeatNumbers(null);
+        Booking b2 = new Booking();
+        b2.setSeatNumbers("");
+        when(bookingRepository.findByMovieIdAndShowTimeAndStatus(any(), any(), eq("CONFIRMED")))
+                .thenReturn(Arrays.asList(b1, b2));
+
+        List<Integer> result = bookingService.getBookedSeatNumbers(1L, LocalDateTime.now());
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldConvertDtoWithNullAndEmptySeatNumbers() {
+        booking.setSeatNumbers(null);
+        Booking emptySeats = new Booking();
+        emptySeats.setId(2L);
+        emptySeats.setUser(user);
+        emptySeats.setMovie(movie);
+        emptySeats.setSeatNumbers("");
+
+        when(bookingRepository.findByUserIdWithDetails(1L)).thenReturn(Arrays.asList(booking, emptySeats));
+
+        List<BookingDTO> result = bookingService.getUserBookingsByUserId(1L);
+
+        assertEquals(2, result.size());
+        assertTrue(result.get(0).getSeatNumbers().isEmpty());
+        assertTrue(result.get(1).getSeatNumbers().isEmpty());
     }
 }

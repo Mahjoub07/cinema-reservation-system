@@ -31,7 +31,7 @@ public class QRCodeService {
     private byte[] buildQRCodeBytes(Long bookingId)
                                      throws WriterException, IOException {
         String content = String.format(
-            "https://mahjoub07.github.io/cinema-reservation-system/my-bookings#booking-%d",
+            "https://mahjoub07.github.io/booking/cinema-reservation-system/#/verify/%d",
             bookingId
         );
 
