@@ -48,7 +48,7 @@ class MovieServiceTest {
         movie.setDuration(148);
         movie.setAvailableSeats(100);
 
-        movieDTO = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, null, 100, null, null);
+        movieDTO = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, null, 100, null, null, null);
     }
 
     @Test
@@ -127,7 +127,7 @@ class MovieServiceTest {
 
     @Test
     void shouldUpdateMovie() {
-        MovieDTO updated = new MovieDTO(1L, "Inception 2", "Sequel", "Sci-Fi", 160, null, 80, null, null);
+        MovieDTO updated = new MovieDTO(1L, "Inception 2", "Sequel", "Sci-Fi", 160, null, 80, null, null, null);
 
         when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
         when(movieRepository.save(any(Movie.class))).thenReturn(movie);
@@ -151,7 +151,7 @@ class MovieServiceTest {
 
     @Test
     void shouldUpdateMovieWithPriceAndPosterUrl() {
-        MovieDTO updated = new MovieDTO(1L, "Inception", "Updated", "Sci-Fi", 160, null, 80, "/uploads/poster.jpg", 15.0);
+        MovieDTO updated = new MovieDTO(1L, "Inception", "Updated", "Sci-Fi", 160, null, 80, "/uploads/poster.jpg", "/uploads/backdrop.jpg", 15.0);
 
         when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
         when(movieRepository.save(any(Movie.class))).thenReturn(movie);

@@ -21,6 +21,7 @@ public class Movie {
     private int availableSeats;
     private Double price;
     private String posterUrl;
+    private String backdropUrl;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -41,4 +42,6 @@ public class Movie {
     public void setPrice(Double price) { this.price = price; }
     public String getPosterUrl() { return posterUrl; }
     public void setPosterUrl(String posterUrl) { this.posterUrl = posterUrl; }
+    public String getBackdropUrl() { return backdropUrl; }
+    public void setBackdropUrl(String backdropUrl) { this.backdropUrl = backdropUrl; }
 }

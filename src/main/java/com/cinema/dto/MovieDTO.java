@@ -35,6 +35,9 @@ public class MovieDTO {
     // Optional: URL to movie poster image (uploaded to Supabase Storage)
     private String posterUrl;
 
+    // Optional: URL to movie backdrop image (horizontal, for carousel banners)
+    private String backdropUrl;
+
     @NotNull(message = "Price is required")
     @Min(value = 0, message = "Price cannot be negative")
     private Double price;
@@ -42,7 +45,7 @@ public class MovieDTO {
     public MovieDTO() {}
 
     public MovieDTO(Long id, String title, String description, String genre,
-                   Integer duration, LocalDateTime showTime, Integer availableSeats, String posterUrl, Double price) {
+                   Integer duration, LocalDateTime showTime, Integer availableSeats, String posterUrl, String backdropUrl, Double price) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -51,6 +54,7 @@ public class MovieDTO {
         this.showTime = showTime;
         this.availableSeats = availableSeats;
         this.posterUrl = posterUrl;
+        this.backdropUrl = backdropUrl;
         this.price = price;
     }
 
@@ -70,6 +74,8 @@ public class MovieDTO {
     public void setAvailableSeats(Integer availableSeats) { this.availableSeats = availableSeats; }
     public String getPosterUrl() { return posterUrl; }
     public void setPosterUrl(String posterUrl) { this.posterUrl = posterUrl; }
+    public String getBackdropUrl() { return backdropUrl; }
+    public void setBackdropUrl(String backdropUrl) { this.backdropUrl = backdropUrl; }
     public Double getPrice() { return price; }
     public void setPrice(Double price) { this.price = price; }
 }

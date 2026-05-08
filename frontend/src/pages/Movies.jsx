@@ -7,7 +7,7 @@ import '../styles/Movies.css';
 
 const SkeletonCard = () => (
   <div className="movie-card skeleton-card">
-    <div className="movie-poster skeleton" style={{ height: '220px' }} />
+    <div className="movie-poster skeleton" style={{ width: '100%', aspectRatio: '2 / 3' }} />
     <div className="movie-info" style={{ gap: '12px', display: 'flex', flexDirection: 'column' }}>
       <div className="skeleton" style={{ width: '60px', height: '20px', borderRadius: '20px' }} />
       <div className="skeleton" style={{ width: '80%', height: '16px' }} />
@@ -25,6 +25,7 @@ const Movies = () => {
   const [selectedGenre, setSelectedGenre] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const genres = [
     'Action', 'Adventure', 'Animation', 'Comedy', 'Crime',
@@ -94,6 +95,16 @@ const Movies = () => {
     }
   };
 
+  const featuredMovies = movies.slice(0, 5);
+
+  useEffect(() => {
+    if (featuredMovies.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % featuredMovies.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [featuredMovies.length]);
+
   const handleBook = (movie) => {
     if (!user) {
       navigate('/login', { state: { redirectTo: `/booking/${movie.id}` } });
@@ -105,8 +116,6 @@ const Movies = () => {
   const handleViewDetails = (movie) => {
     navigate(`/movie/${movie.id}`);
   };
-
-  const heroMovie = movies.length > 0 ? movies[0] : null;
 
   if (error) {
     return (
@@ -122,28 +131,56 @@ const Movies = () => {
 
   return (
     <div className="movies-container">
-      {heroMovie && !loading && !searchTerm && !selectedGenre && (
-        <div
-          className="hero-banner"
-          style={heroMovie.posterUrl ? { backgroundImage: `url(${heroMovie.posterUrl})` } : {}}
-        >
-          <div className="hero-gradient" />
-          <div className="hero-content">
-            <span className="hero-badge">Featured</span>
-            <h2 className="hero-title">{heroMovie.title}</h2>
-            <p className="hero-meta">
-              {heroMovie.genre} &middot; {heroMovie.duration} min &middot; ${heroMovie.price?.toFixed(2)}
-            </p>
-            <p className="hero-description">{heroMovie.description}</p>
-            <div className="hero-actions">
-              <button className="btn btn-primary btn-lg" onClick={() => handleBook(heroMovie)}>
-                <span>&#127909;</span> Book Now
-              </button>
-              <button className="btn btn-secondary btn-lg" onClick={() => handleViewDetails(heroMovie)}>
-                More Info
-              </button>
-            </div>
+      {featuredMovies.length > 0 && !loading && !searchTerm && !selectedGenre && (
+        <div className="hero-banner">
+          <div 
+            className="carousel-track"
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          >
+            {featuredMovies.map((movie, index) => (
+              <div key={movie.id} className="hero-slide">
+                <div className="hero-poster-side">
+                  {movie.posterUrl ? (
+                    <img src={movie.posterUrl} alt={movie.title} />
+                  ) : (
+                    <div className="poster-fallback">
+                      <span>&#127909;</span>
+                      <h3>{movie.title}</h3>
+                    </div>
+                  )}
+                </div>
+                <div className="hero-info-side">
+                  <div className="hero-content" key={`content-${currentSlide}`}>
+                    <span className="hero-badge">Featured</span>
+                    <h2 className="hero-title">{movie.title}</h2>
+                    <p className="hero-meta">
+                      {movie.genre} &middot; {movie.duration} min &middot; ${movie.price?.toFixed(2)}
+                    </p>
+                    <p className="hero-description">{movie.description}</p>
+                    <div className="hero-actions">
+                      <button className="btn btn-primary btn-lg" onClick={() => handleBook(movie)}>
+                        <span>&#127909;</span> Book Now
+                      </button>
+                      <button className="btn btn-secondary btn-lg" onClick={() => handleViewDetails(movie)}>
+                        More Info
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
+
+          {featuredMovies.length > 1 && (
+            <div className="carousel-dots">
+              {featuredMovies.map((_, index) => (
+                <div
+                  key={index}
+                  className={`carousel-dot ${index === currentSlide ? 'active' : ''}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -75,6 +75,7 @@ public class MovieService {
         movie.setAvailableSeats(movieDTO.getAvailableSeats());
         movie.setPrice(movieDTO.getPrice());
         movie.setPosterUrl(movieDTO.getPosterUrl());
+        movie.setBackdropUrl(movieDTO.getBackdropUrl());
         Movie savedMovie = movieRepository.save(movie);
         return convertToDTO(savedMovie);
     }
@@ -115,6 +116,26 @@ public class MovieService {
         }
     }
 
+    public String uploadBackdrop(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("File is required");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase())) {
+            throw new BadRequestException("Only image files (JPEG, PNG, GIF, WebP) are allowed");
+        }
+
+        String originalName = file.getOriginalFilename();
+        String safeName = originalName != null ? originalName.replaceAll("[^a-zA-Z0-9.\\-]", "_") : "backdrop";
+        String fileName = UUID.randomUUID() + "_" + safeName;
+
+        try {
+            return supabaseStorageService.uploadFile("movies", fileName, file.getBytes(), contentType);
+        } catch (IOException e) {
+            throw new BadRequestException("Failed to read uploaded file: " + e.getMessage());
+        }
+    }
+
     private MovieDTO convertToDTO(Movie movie) {
         return new MovieDTO(
             movie.getId(),
@@ -125,6 +146,7 @@ public class MovieService {
             movie.getShowTime(),
             movie.getAvailableSeats(),
             movie.getPosterUrl(),
+            movie.getBackdropUrl(),
             movie.getPrice()
         );
     }
@@ -138,6 +160,7 @@ public class MovieService {
         movie.setShowTime(dto.getShowTime());
         movie.setAvailableSeats(dto.getAvailableSeats());
         movie.setPosterUrl(dto.getPosterUrl());
+        movie.setBackdropUrl(dto.getBackdropUrl());
         movie.setPrice(dto.getPrice());
         return movie;
     }

@@ -73,7 +73,7 @@ const MovieDetails = () => {
     <div className="movie-details-container">
       <div
         className="details-backdrop"
-        style={movie.posterUrl ? { backgroundImage: `url(${movie.posterUrl})` } : {}}
+        style={movie.backdropUrl ? { backgroundImage: `url(${movie.backdropUrl})` } : {}}
       >
         <div className="backdrop-gradient" />
       </div>

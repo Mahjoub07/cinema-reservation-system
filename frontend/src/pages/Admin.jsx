@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { getAllMovies, addMovie, updateMovie, deleteMovie, uploadPoster } from '../api/movies';
+import { getAllMovies, addMovie, updateMovie, deleteMovie, uploadPoster, uploadBackdrop } from '../api/movies';
 import { getAllBookingsAdmin, getDashboardStats, getAllUsers, updateUserRole, deleteUser, createAdmin } from '../api/admin';
 import api from '../api/axios';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -27,7 +27,8 @@ const Admin = () => {
     showTime: '',
     availableSeats: '',
     price: '',
-    posterUrl: ''
+    posterUrl: '',
+    backdropUrl: ''
   });
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminFormData, setAdminFormData] = useState({ name: '', email: '', password: '' });
@@ -79,7 +80,8 @@ const Admin = () => {
       showTime: '',
       availableSeats: '',
       price: '',
-      posterUrl: ''
+      posterUrl: '',
+      backdropUrl: ''
     });
     setShowModal(true);
   };
@@ -94,7 +96,8 @@ const Admin = () => {
       showTime: movie.showTime ? movie.showTime.slice(0, 16) : '',
       availableSeats: movie.availableSeats,
       price: movie.price || '',
-      posterUrl: movie.posterUrl || ''
+      posterUrl: movie.posterUrl || '',
+      backdropUrl: movie.backdropUrl || ''
     });
     setShowModal(true);
   };
@@ -229,6 +232,19 @@ const Admin = () => {
       addToast('Poster uploaded successfully', 'success');
     } catch (err) {
       addToast(`Failed to upload poster: ${err.response?.data?.message || err.message || 'Unknown error'}`, 'error');
+    }
+  };
+
+  // Upload backdrop to Supabase Storage and update form data with returned URL
+  const handleBackdropUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const result = await uploadBackdrop(file);
+      setFormData({ ...formData, backdropUrl: result.url });
+      addToast('Backdrop uploaded successfully', 'success');
+    } catch (err) {
+      addToast(`Failed to upload backdrop: ${err.response?.data?.message || err.message || 'Unknown error'}`, 'error');
     }
   };
 
@@ -460,7 +476,7 @@ const Admin = () => {
                       <input type="number" name="price" value={formData.price} onChange={handleChange} step="0.01" min="0" required />
                     </div>
                     <div className="form-group poster-group">
-                      <label>Poster</label>
+                      <label>Poster (Vertical)</label>
                       <div className="poster-upload-card">
                         <input type="file" accept="image/*" onChange={handlePosterUpload} />
                         {formData.posterUrl ? (
@@ -470,6 +486,22 @@ const Admin = () => {
                         ) : (
                           <div className="poster-placeholder">
                             <span>&#127909;</span>
+                            <small>Drop image or click</small>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="form-group poster-group">
+                      <label>Backdrop (Horizontal for Carousel)</label>
+                      <div className="poster-upload-card">
+                        <input type="file" accept="image/*" onChange={handleBackdropUpload} />
+                        {formData.backdropUrl ? (
+                          <div className="poster-preview-inline">
+                            <img src={formData.backdropUrl} alt="Backdrop" />
+                          </div>
+                        ) : (
+                          <div className="poster-placeholder">
+                            <span>&#127916;</span>
                             <small>Drop image or click</small>
                           </div>
                         )}

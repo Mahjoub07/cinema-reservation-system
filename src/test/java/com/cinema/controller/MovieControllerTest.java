@@ -29,7 +29,7 @@ class MovieControllerTest {
 
     @BeforeEach
     void setUp() {
-        movieDTO = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, null, 100, null, null);
+        movieDTO = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, null, 100, null, null, null);
     }
 
     @Test

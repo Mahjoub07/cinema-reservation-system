@@ -61,7 +61,7 @@ class DTOsTest {
     @Test
     void shouldCreateMovieDTOWithAllArgsConstructor() {
         LocalDateTime now = LocalDateTime.now();
-        MovieDTO dto = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, now, 100, "/poster.jpg", 12.5);
+        MovieDTO dto = new MovieDTO(1L, "Inception", "A mind-bending thriller", "Sci-Fi", 148, now, 100, "/poster.jpg", "/backdrop.jpg", 12.5);
 
         assertEquals(1L, dto.getId());
         assertEquals("Inception", dto.getTitle());

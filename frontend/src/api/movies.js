@@ -46,3 +46,16 @@ export const uploadPoster = async (file) => {
   });
   return response.data;
 };
+
+// Upload movie backdrop to Supabase Storage via backend
+// Content-Type is set to undefined to let browser set it automatically with boundary parameter
+export const uploadBackdrop = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post('/movies/upload-backdrop', formData, {
+    headers: {
+      'Content-Type': undefined
+    }
+  });
+  return response.data;
+};
