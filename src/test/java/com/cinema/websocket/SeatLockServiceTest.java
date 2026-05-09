@@ -69,7 +69,7 @@ class SeatLockServiceTest {
     }
 
     @Test
-    void shouldReturnZeroRemainingSecondsForExpiredLock() throws InterruptedException {
+    void shouldReturnZeroRemainingSecondsForExpiredLock() {
         seatLockService.lockSeat(1L, "2024-01-01T10:00", "A1", "session1");
         // Note: actual expiration requires 5 minutes; we test the non-expired path above
         // For expired path, we can verify it returns 0 for null seat
