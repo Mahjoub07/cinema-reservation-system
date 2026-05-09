@@ -126,7 +126,6 @@ public class UserService {
         return convertToDTO(userRepository.save(targetUser));
     }
 
-    // Delete user with proper role checks
     public void deleteUser(Long targetUserId) {
         User currentUser = getCurrentAuthenticatedUser();
         User targetUser = userRepository.findById(targetUserId)

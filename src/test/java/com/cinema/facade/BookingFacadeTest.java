@@ -1,7 +1,5 @@
 package com.cinema.facade;
 
-import com.cinema.adapter.MockStripePaymentAdapter;
-import com.cinema.adapter.PaymentProcessor;
 import com.cinema.bridge.ConsoleNotificationSender;
 import com.cinema.bridge.NotificationSender;
 import com.cinema.dto.BookingDTO;
@@ -91,7 +89,6 @@ class BookingFacadeTest {
         LocalDateTime showTime = LocalDateTime.now().plusDays(1);
         request = new BookingRequestDTO(1L, 2, List.of(1, 2), showTime);
 
-        PaymentProcessor paymentProcessor = new MockStripePaymentAdapter();
         NotificationSender notificationSender = new ConsoleNotificationSender();
 
         // Use BookingService with mocks
@@ -107,7 +104,6 @@ class BookingFacadeTest {
 
         bookingFacade = new BookingFacade(
                 bookingService,
-                paymentProcessor,
                 notificationSender
         );
     }
@@ -133,29 +129,6 @@ class BookingFacadeTest {
         assertNotNull(result);
         assertEquals("CONFIRMED", result.getStatus());
         assertEquals(2, result.getNumberOfSeats());
-    }
-
-    @Test
-    void shouldThrowExceptionWhenPaymentFails() {
-        when(userService.findByEmail("test@test.com")).thenReturn(Optional.of(user));
-        when(movieService.getMovieById(1L)).thenReturn(movie);
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
-            Booking b = inv.getArgument(0);
-            b.setId(1L);
-            return b;
-        });
-
-        com.cinema.adapter.PaymentProcessor failingProcessor = new com.cinema.adapter.PaymentProcessor() {
-            @Override public boolean processPayment(double amount, String email) { return false; }
-            @Override public String getProcessorName() { return "FailingProcessor"; }
-        };
-        com.cinema.bridge.NotificationSender sender = new com.cinema.bridge.ConsoleNotificationSender();
-        BookingFacade facade = new BookingFacade(bookingService, failingProcessor, sender);
-
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> facade.completeBooking("test@test.com", request));
-
-        assertTrue(exception.getMessage().contains("Payment processing failed"));
     }
 
     @Test

@@ -261,7 +261,6 @@ public class BookingService {
                 movieService.updateMovieSeats(movie);
             }
             
-            // Actually delete from database
             bookingRepository.deleteById(id);
         }
     }
