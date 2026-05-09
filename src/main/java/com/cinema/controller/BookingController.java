@@ -3,6 +3,7 @@ package com.cinema.controller;
 import com.cinema.dto.BookingDTO;
 import com.cinema.dto.BookingRequestDTO;
 import com.cinema.service.BookingService;
+import com.cinema.websocket.SeatLockService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -21,9 +22,11 @@ import java.util.Map;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final SeatLockService seatLockService;
 
-    public BookingController(BookingService bookingService) {
+    public BookingController(BookingService bookingService, SeatLockService seatLockService) {
         this.bookingService = bookingService;
+        this.seatLockService = seatLockService;
     }
 
     @PostMapping
@@ -40,6 +43,18 @@ public class BookingController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime showtime) {
         List<Integer> bookedSeats = bookingService.getBookedSeatNumbers(movieId, showtime);
         return ResponseEntity.ok(Map.of("bookedSeats", bookedSeats));
+    }
+
+    @GetMapping("/locked-seats/{movieId}")
+    public ResponseEntity<Map<String, Object>> getLockedSeats(
+            @PathVariable Long movieId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime showtime) {
+        String showTimeStr = showtime.toString();
+        java.util.Set<String> locked = seatLockService.getLockedSeats(movieId, showTimeStr);
+        return ResponseEntity.ok(Map.of(
+                "lockedSeats", locked,
+                "count", locked.size()
+        ));
     }
 
     @GetMapping("/my-bookings")

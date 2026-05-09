@@ -176,3 +176,40 @@
     justify-content: center;
   }
 }
+
+/* Light Theme Overrides */
+[data-theme="light"] .bookings-header h1 {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .bookings-count {
+  background: var(--bg-glass);
+  border-color: var(--border-subtle);
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .booking-card {
+  background: linear-gradient(180deg, var(--bg-glass) 0%, rgba(0,0,0,0.02) 100%);
+  border-color: var(--border-subtle);
+}
+
+[data-theme="light"] .booking-movie h3 {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .meta-label {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .meta-value {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .booking-card-actions {
+  border-top-color: var(--border-subtle);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .empty-state span {
+  color: var(--text-muted);
+}

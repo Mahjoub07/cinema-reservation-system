@@ -47,11 +47,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAdmin = () => {
-    return user?.role === 'ROLE_ADMIN';
+    return user?.role === 'ROLE_ADMIN' || user?.role === 'ROLE_MAIN_ADMIN';
+  };
+
+  const isMainAdmin = () => {
+    return user?.role === 'ROLE_MAIN_ADMIN';
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isAdmin, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isAdmin, isMainAdmin, loading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -68,17 +72,16 @@ export const useAuth = () => {
 // Helper function to decode JWT
 const decodeJWT = (token) => {
   try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(
+      decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      )
     );
-    return JSON.parse(jsonPayload);
-  } catch (error) {
-    console.error('Error decoding JWT:', error);
+  } catch {
     return {};
   }
 };

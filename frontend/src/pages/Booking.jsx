@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { createBooking, downloadTicket, getBookedSeats } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import '../styles/Booking.css';
 
 const TOTAL_SEATS = 64; // 8x8 grid for visual seat picker
@@ -16,6 +17,7 @@ const Booking = () => {
   const [bookingResult, setBookingResult] = useState(null);
 
   const { user } = useAuth();
+  const { addToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const movie = location.state?.movie;
@@ -52,6 +54,7 @@ const Booking = () => {
   const toggleSeat = (index) => {
     if (takenSeats.has(index)) return;
     setError('');
+    
     setSelectedSeats(prev => {
       const next = new Set(prev);
       if (next.has(index)) {
@@ -186,8 +189,8 @@ const Booking = () => {
           </div>
           <div className="seat-legend">
             <div className="legend-item"><span className="seat-sample" /> Available</div>
-            <div className="legend-item"><span className="seat-sample taken" /> Taken</div>
             <div className="legend-item"><span className="seat-sample selected" /> Selected</div>
+            <div className="legend-item"><span className="seat-sample taken" /> Booked</div>
           </div>
         </div>
       </div>

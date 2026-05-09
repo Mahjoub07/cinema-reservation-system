@@ -7,18 +7,16 @@ export const ToastProvider = ({ children }) => {
 
   const addToast = (message, type = 'info') => {
     const id = Date.now();
-    setToasts([...toasts, { id, message, type }]);
-    setTimeout(() => removeToast(id), 3000);
-  };
-
-  const removeToast = (id) => {
-    setToasts(toasts.filter(toast => toast.id !== id));
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(toast => toast.id !== id));
+    }, 3000);
   };
 
   return (
-    <ToastContext.Provider value={{ addToast, removeToast }}>
+    <ToastContext.Provider value={{ addToast }}>
       {children}
-      <div className="toast-container">
+      <div className="toast-container" role="region" aria-live="polite">
         {toasts.map(toast => (
           <div key={toast.id} className={`toast toast-${toast.type}`}>
             {toast.message}

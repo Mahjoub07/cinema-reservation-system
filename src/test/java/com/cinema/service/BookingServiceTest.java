@@ -9,12 +9,14 @@ import com.cinema.model.Movie;
 import com.cinema.model.User;
 import com.cinema.pricing.PricingContext;
 import com.cinema.repository.BookingRepository;
+import com.cinema.websocket.SeatLockService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -38,6 +40,12 @@ class BookingServiceTest {
 
     @Mock
     private PricingContext pricingContext;
+
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
+
+    @Mock
+    private SeatLockService seatLockService;
 
     @InjectMocks
     private BookingService bookingService;
@@ -179,7 +187,7 @@ class BookingServiceTest {
     void shouldCreateBookingSuccessfullyEvenWhenQrCodeFails() throws Exception {
         QRCodeService mockQrService = mock(QRCodeService.class);
         PricingContext realPricing = new PricingContext(List.of());
-        BookingService service = new BookingService(bookingRepository, movieService, userService, mockQrService, realPricing);
+        BookingService service = new BookingService(bookingRepository, movieService, userService, mockQrService, realPricing, messagingTemplate, seatLockService);
 
         when(movieService.getMovieById(1L)).thenReturn(movie);
         when(userService.findByEmail("mahjoub@cinema.com")).thenReturn(Optional.of(user));
@@ -265,7 +273,7 @@ class BookingServiceTest {
     void shouldGenerateTicketPdf() {
         QRCodeService realQrService = new QRCodeService();
         PricingContext realPricing = new PricingContext(List.of());
-        BookingService service = new BookingService(bookingRepository, movieService, userService, realQrService, realPricing);
+        BookingService service = new BookingService(bookingRepository, movieService, userService, realQrService, realPricing, messagingTemplate, seatLockService);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
         byte[] pdf = service.generateTicketPdf(1L);
@@ -278,7 +286,7 @@ class BookingServiceTest {
     void shouldThrowExceptionWhenGenerateTicketPdfBookingNotFound() {
         QRCodeService realQrService = new QRCodeService();
         PricingContext realPricing = new PricingContext(List.of());
-        BookingService service = new BookingService(bookingRepository, movieService, userService, realQrService, realPricing);
+        BookingService service = new BookingService(bookingRepository, movieService, userService, realQrService, realPricing, messagingTemplate, seatLockService);
         when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
@@ -350,13 +358,14 @@ class BookingServiceTest {
 
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
         when(bookingRepository.findById(2L)).thenReturn(Optional.of(booking2));
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
 
         bookingService.bulkDeleteBookings(Arrays.asList(1L, 2L));
 
-        assertEquals("CANCELLED", booking.getStatus());
-        assertEquals("CANCELLED", booking2.getStatus());
-        verify(bookingRepository, times(2)).save(any(Booking.class));
+        // Verify deleteById is called for each booking
+        verify(bookingRepository).deleteById(1L);
+        verify(bookingRepository).deleteById(2L);
+        // Verify movie seats are restored
+        verify(movieService, times(2)).updateMovieSeats(any(Movie.class));
     }
 
     @Test

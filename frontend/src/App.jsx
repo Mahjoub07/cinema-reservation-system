@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import Header from './components/Header';
@@ -12,6 +13,8 @@ import Booking from './pages/Booking';
 import MyBookings from './pages/MyBookings';
 import Admin from './pages/Admin';
 import VerifyBooking from './pages/VerifyBooking';
+import BookingConfirmation from './pages/BookingConfirmation';
+import Watchlist from './pages/Watchlist';
 import './styles/App.css';
 import './styles/Toast.css';
 
@@ -31,27 +34,29 @@ function AnimatedRoutes() {
           <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
           <Route path="/verify/:bookingId" element={<VerifyBooking />} />
+          <Route path="/booking-confirmation/:bookingId" element={<BookingConfirmation />} />
+          <Route path="/watchlist" element={<ProtectedRoute><Watchlist /></ProtectedRoute>} />
         </Routes>
       </div>
     </main>
   );
 }
 
-const basename = import.meta.env.BASE_URL?.replace(/\/$/, '') || '/';
-
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <Router basename={basename}>
-          <div className="app">
-            <Header />
-            <AnimatedRoutes />
-            <Footer />
-          </div>
-        </Router>
-      </ToastProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <Router basename="/">
+            <div className="app">
+              <Header />
+              <AnimatedRoutes />
+              <Footer />
+            </div>
+          </Router>
+        </ToastProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

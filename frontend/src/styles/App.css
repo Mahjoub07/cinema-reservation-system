@@ -93,6 +93,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 .app {
@@ -502,4 +503,111 @@ select option {
   .main-content {
     padding: var(--space-md);
   }
+}
+
+/* ============================================
+   THEME TRANSITIONS (all elements)
+   ============================================ */
+
+* {
+  transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+/* ============================================
+   LIGHT THEME OVERRIDES
+   ============================================ */
+
+[data-theme="light"] {
+  /* Light Theme Base */
+  --bg-primary: #f5f5f7;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f0f0f2;
+  --bg-glass: rgba(255, 255, 255, 0.6);
+  --bg-glass-hover: rgba(255, 255, 255, 0.8);
+  --bg-glass-active: rgba(255, 255, 255, 0.95);
+
+  /* Text Colors */
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --text-muted: #888888;
+  --text-disabled: #bbbbbb;
+
+  /* Accent Colors */
+  --accent-success: #2e9e4f;
+  --accent-success-bg: rgba(46, 158, 79, 0.12);
+  --accent-error: #d32f2f;
+  --accent-error-bg: rgba(211, 47, 47, 0.12);
+  --accent-warning: #f57c00;
+  --accent-info: #1976d2;
+
+  /* Borders */
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-medium: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.15);
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.12);
+  --shadow-brand: 0 4px 16px rgba(229, 9, 20, 0.2);
+  --shadow-brand-lg: 0 8px 32px rgba(229, 9, 20, 0.25);
+  --shadow-glow-red: 0 0 40px rgba(229, 9, 20, 0.1);
+}
+
+[data-theme="light"] body {
+  background-color: var(--bg-primary);
+}
+
+[data-theme="light"] .app::before {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(229, 9, 20, 0.03), transparent),
+    radial-gradient(ellipse 60% 40% at 20% 100%, rgba(229, 9, 20, 0.02), transparent);
+}
+
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background-color: rgba(0, 0, 0, 0.03);
+  color: var(--text-primary);
+  border: 1px solid var(--border-medium);
+}
+
+[data-theme="light"] input:hover,
+[data-theme="light"] textarea:hover,
+[data-theme="light"] select:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus,
+[data-theme="light"] select:focus {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] select option {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .glass-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.3) 100%);
+  border: 1px solid var(--border-subtle);
+}
+
+[data-theme="light"] .skeleton {
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, rgba(0,0,0,0.04) 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-red);
 }

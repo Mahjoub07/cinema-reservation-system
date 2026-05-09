@@ -9,8 +9,11 @@ import com.cinema.pricing.PricingContext;
 import com.cinema.repository.BookingRepository;
 import com.cinema.exception.BadRequestException;
 import com.cinema.exception.ResourceNotFoundException;
+import com.cinema.websocket.SeatEvent;
+import com.cinema.websocket.SeatLockService;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfWriter;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
@@ -18,7 +21,6 @@ import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -31,17 +33,23 @@ public class BookingService {
     private final UserService userService;
     private final QRCodeService qrCodeService;
     private final PricingContext pricingContext;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final SeatLockService seatLockService;
 
     public BookingService(BookingRepository bookingRepository,
                           MovieService movieService,
                           UserService userService,
                           QRCodeService qrCodeService,
-                          PricingContext pricingContext) {
+                          PricingContext pricingContext,
+                          SimpMessagingTemplate messagingTemplate,
+                          SeatLockService seatLockService) {
         this.bookingRepository = bookingRepository;
         this.movieService = movieService;
         this.userService = userService;
         this.qrCodeService = qrCodeService;
         this.pricingContext = pricingContext;
+        this.messagingTemplate = messagingTemplate;
+        this.seatLockService = seatLockService;
     }
 
     public List<Integer> getBookedSeatNumbers(Long movieId, LocalDateTime showTime) {
@@ -105,6 +113,18 @@ public class BookingService {
         booking.setVerificationToken(UUID.randomUUID().toString());
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        // Broadcast seat booked events via WebSocket
+        for (Integer seat : requestedSeats) {
+            SeatEvent bookedEvent = new SeatEvent(
+                    movie.getId(), request.getShowTime().toString(), String.valueOf(seat),
+                    SeatEvent.Action.BOOKED, null
+            );
+            messagingTemplate.convertAndSend(
+                    "/topic/seats/" + movie.getId() + "/" + request.getShowTime(),
+                    bookedEvent
+            );
+        }
 
         try {
             String qrCode = qrCodeService.generateQRCode(
@@ -208,16 +228,40 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
         booking.setStatus("CANCELLED");
-        booking.setSeatNumbers(null);
         Movie movie = booking.getMovie();
         movie.setAvailableSeats(movie.getAvailableSeats() + booking.getNumberOfSeats());
         movieService.updateMovieSeats(movie);
+
+        // Broadcast seat released events via WebSocket
+        if (booking.getSeatNumbers() != null) {
+            for (String s : booking.getSeatNumbers().split(",")) {
+                SeatEvent releasedEvent = new SeatEvent(
+                        movie.getId(), booking.getShowTime().toString(), s.trim(),
+                        SeatEvent.Action.RELEASED, null
+                );
+                messagingTemplate.convertAndSend(
+                        "/topic/seats/" + movie.getId() + "/" + booking.getShowTime(),
+                        releasedEvent
+                );
+            }
+        }
+        booking.setSeatNumbers(null);
         bookingRepository.save(booking);
     }
 
     public void bulkDeleteBookings(List<Long> ids) {
         for (Long id : ids) {
-            cancelBooking(id);
+            Booking booking = bookingRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+            
+            // Restore movie seats before deletion
+            if ("CONFIRMED".equals(booking.getStatus()) && booking.getMovie() != null) {
+                Movie movie = booking.getMovie();
+                movie.setAvailableSeats(movie.getAvailableSeats() + booking.getNumberOfSeats());
+                movieService.updateMovieSeats(movie);
+            }
+            
+            bookingRepository.deleteById(id);
         }
     }
 
@@ -228,19 +272,22 @@ public class BookingService {
                 seatNumbers.add(Integer.parseInt(s.trim()));
             }
         }
-        return new BookingDTO(
-            booking.getId(),
-            booking.getUser().getId(),
-            booking.getUser().getEmail(),
-            booking.getMovie().getId(),
-            booking.getMovie().getTitle(),
-            booking.getNumberOfSeats(),
-            booking.getBookingDate(),
-            booking.getStatus(),
-            booking.getTotalPrice(),
-            seatNumbers,
-            booking.getShowTime(),
-            booking.getVerificationToken()
-        );
+        BookingDTO dto = new BookingDTO();
+        dto.setId(booking.getId());
+        dto.setUserId(booking.getUser().getId());
+        dto.setUserEmail(booking.getUser().getEmail());
+        dto.setUserName(booking.getUser().getName());
+        dto.setMovieId(booking.getMovie().getId());
+        dto.setMovieTitle(booking.getMovie().getTitle());
+        dto.setMoviePosterUrl(booking.getMovie().getPosterUrl());
+        dto.setNumberOfSeats(booking.getNumberOfSeats());
+        dto.setBookingDate(booking.getBookingDate());
+        dto.setStatus(booking.getStatus());
+        dto.setTotalPrice(booking.getTotalPrice());
+        dto.setSeatNumbers(seatNumbers);
+        dto.setShowTime(booking.getShowTime());
+        dto.setVerificationToken(booking.getVerificationToken());
+        dto.setQrCode(booking.getQrCode());
+        return dto;
     }
 }

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllMovies, searchMovies, getMoviesByGenre } from '../api/movies';
+import { checkWatchlist, addToWatchlist, removeFromWatchlist } from '../api/watchlist';
 import { useAuth } from '../context/AuthContext';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { useToast } from '../context/ToastContext';
 import '../styles/Movies.css';
 
 const SkeletonCard = () => (
@@ -25,7 +26,10 @@ const Movies = () => {
   const [selectedGenre, setSelectedGenre] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { addToast } = useToast();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [watchlist, setWatchlist] = useState(new Set());
+  const [watchlistLoading, setWatchlistLoading] = useState(new Set());
 
   const genres = [
     'Action', 'Adventure', 'Animation', 'Comedy', 'Crime',
@@ -116,6 +120,69 @@ const Movies = () => {
   const handleViewDetails = (movie) => {
     navigate(`/movie/${movie.id}`);
   };
+
+  const toggleWatchlist = async (movie, event) => {
+    event.stopPropagation();
+    if (!user) {
+      addToast('Please login to add movies to watchlist', 'info');
+      navigate('/login');
+      return;
+    }
+
+    const isInWatchlist = watchlist.has(movie.id);
+    setWatchlistLoading(prev => new Set(prev).add(movie.id));
+
+    try {
+      if (isInWatchlist) {
+        await removeFromWatchlist(movie.id);
+        setWatchlist(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(movie.id);
+          return newSet;
+        });
+        addToast('Removed from watchlist', 'info');
+      } else {
+        await addToWatchlist(movie.id);
+        setWatchlist(prev => new Set(prev).add(movie.id));
+        addToast('Added to watchlist', 'success');
+      }
+    } catch (err) {
+      addToast('Failed to update watchlist', 'error');
+      setWatchlist(prev => {
+        const newSet = new Set(prev);
+        if (isInWatchlist) {
+          newSet.add(movie.id);
+        } else {
+          newSet.delete(movie.id);
+        }
+        return newSet;
+      });
+    } finally {
+      setWatchlistLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(movie.id);
+        return newSet;
+      });
+    }
+  };
+
+  const checkMovieInWatchlist = async (movieId) => {
+    if (!user) return false;
+    try {
+      const inWatchlist = await checkWatchlist(movieId);
+      if (inWatchlist) {
+        setWatchlist(prev => new Set(prev).add(movieId));
+      }
+    } catch (err) {
+      console.error('Failed to check watchlist:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (movies.length > 0 && user) {
+      movies.forEach(movie => checkMovieInWatchlist(movie.id));
+    }
+  }, [movies, user]);
 
   if (error) {
     return (
@@ -244,6 +311,16 @@ const Movies = () => {
                     <h3>{movie.title}</h3>
                   </div>
                 )}
+                <button
+                  className={`watchlist-btn ${watchlist.has(movie.id) ? 'active' : ''}`}
+                  onClick={(e) => toggleWatchlist(movie, e)}
+                  disabled={watchlistLoading.has(movie.id)}
+                  aria-label={watchlist.has(movie.id) ? 'Remove from watchlist' : 'Add to watchlist'}
+                >
+                  <svg viewBox="0 0 24 24" fill={watchlist.has(movie.id) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                </button>
                 <div className="poster-overlay">
                   <button className="overlay-btn" onClick={() => handleViewDetails(movie)}>
                     View Details

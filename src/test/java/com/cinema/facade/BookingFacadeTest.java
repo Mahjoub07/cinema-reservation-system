@@ -1,7 +1,5 @@
 package com.cinema.facade;
 
-import com.cinema.adapter.MockStripePaymentAdapter;
-import com.cinema.adapter.PaymentProcessor;
 import com.cinema.bridge.ConsoleNotificationSender;
 import com.cinema.bridge.NotificationSender;
 import com.cinema.dto.BookingDTO;
@@ -16,11 +14,13 @@ import com.cinema.service.BookingService;
 import com.cinema.service.MovieService;
 import com.cinema.service.QRCodeService;
 import com.cinema.service.UserService;
+import com.cinema.websocket.SeatLockService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -47,6 +47,12 @@ class BookingFacadeTest {
 
     @Mock
     private PricingContext pricingContext;
+
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
+
+    @Mock
+    private SeatLockService seatLockService;
 
     private BookingService bookingService;
     private BookingFacade bookingFacade;
@@ -83,7 +89,6 @@ class BookingFacadeTest {
         LocalDateTime showTime = LocalDateTime.now().plusDays(1);
         request = new BookingRequestDTO(1L, 2, List.of(1, 2), showTime);
 
-        PaymentProcessor paymentProcessor = new MockStripePaymentAdapter();
         NotificationSender notificationSender = new ConsoleNotificationSender();
 
         // Use BookingService with mocks
@@ -92,12 +97,13 @@ class BookingFacadeTest {
                 movieService,
                 userService,
                 qrCodeService,
-                pricingContext
+                pricingContext,
+                messagingTemplate,
+                seatLockService
         );
 
         bookingFacade = new BookingFacade(
                 bookingService,
-                paymentProcessor,
                 notificationSender
         );
     }
@@ -123,29 +129,6 @@ class BookingFacadeTest {
         assertNotNull(result);
         assertEquals("CONFIRMED", result.getStatus());
         assertEquals(2, result.getNumberOfSeats());
-    }
-
-    @Test
-    void shouldThrowExceptionWhenPaymentFails() {
-        when(userService.findByEmail("test@test.com")).thenReturn(Optional.of(user));
-        when(movieService.getMovieById(1L)).thenReturn(movie);
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(inv -> {
-            Booking b = inv.getArgument(0);
-            b.setId(1L);
-            return b;
-        });
-
-        com.cinema.adapter.PaymentProcessor failingProcessor = new com.cinema.adapter.PaymentProcessor() {
-            @Override public boolean processPayment(double amount, String email) { return false; }
-            @Override public String getProcessorName() { return "FailingProcessor"; }
-        };
-        com.cinema.bridge.NotificationSender sender = new com.cinema.bridge.ConsoleNotificationSender();
-        BookingFacade facade = new BookingFacade(bookingService, failingProcessor, sender);
-
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> facade.completeBooking("test@test.com", request));
-
-        assertTrue(exception.getMessage().contains("Payment processing failed"));
     }
 
     @Test

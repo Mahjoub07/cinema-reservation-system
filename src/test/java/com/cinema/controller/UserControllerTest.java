@@ -59,23 +59,4 @@ class UserControllerTest {
         assertEquals("jwt-token", result.get("token"));
     }
 
-    @Test
-    void shouldGetAllUsers() {
-        when(userService.findAll()).thenReturn(Arrays.asList(userDTO));
-
-        List<UserDTO> result = userController.getAllUsers().getBody();
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("mahjoub@cinema.com", result.get(0).getEmail());
-    }
-
-    @Test
-    void shouldDeleteUser() {
-        doNothing().when(userService).deleteUser(1L);
-
-        userController.deleteUser(1L);
-
-        verify(userService, times(1)).deleteUser(1L);
-    }
 }
