@@ -2,7 +2,7 @@ package com.cinema.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-// model movies
+
 @Entity
 @Table(name = "movies")
 public class Movie {
