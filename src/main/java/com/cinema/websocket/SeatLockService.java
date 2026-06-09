@@ -4,7 +4,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;                  
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Set;
@@ -18,19 +18,20 @@ public class SeatLockService {
 
     private final SimpMessagingTemplate messagingTemplate;
 
+    // movieId -> showTime -> seatNumber -> LockInfo
     private final Map<Long, Map<String, Map<String, LockInfo>>> seatLocks = new ConcurrentHashMap<>();
 
     private static class LockInfo {
         final String sessionId;
-        final Instant lockedAt;
+        final Instant lockedAt;                          // ✅ was LocalDateTime
 
-        LockInfo(String sessionId, Instant lockedAt) {
+        LockInfo(String sessionId, Instant lockedAt) {   // ✅ was LocalDateTime
             this.sessionId = sessionId;
             this.lockedAt = lockedAt;
         }
 
         boolean isExpired() {
-            return ChronoUnit.MINUTES.between(lockedAt, Instant.now()) >= LOCK_DURATION_MINUTES;
+            return ChronoUnit.MINUTES.between(lockedAt, Instant.now()) >= LOCK_DURATION_MINUTES; // ✅ fixed
         }
     }
 
@@ -42,9 +43,81 @@ public class SeatLockService {
         seatLocks
                 .computeIfAbsent(movieId, k -> new ConcurrentHashMap<>())
                 .computeIfAbsent(showTime, k -> new ConcurrentHashMap<>())
-                .put(seatNumber, new LockInfo(sessionId, Instant.now()));
+                .put(seatNumber, new LockInfo(sessionId, Instant.now())); // ✅ was LocalDateTime.now()
     }
 
+    public void unlockSeat(Long movieId, String showTime, String seatNumber, String sessionId) {
+        Map<String, LockInfo> showTimeLocks = getShowTimeLocks(movieId, showTime);
+        if (showTimeLocks != null) {
+            showTimeLocks.computeIfPresent(seatNumber, (key, lock) ->
+                    lock.sessionId.equals(sessionId) ? null : lock
+            );
+        }
+    }
+
+    public boolean isSeatLocked(Long movieId, String showTime, String seatNumber) {
+        Map<String, LockInfo> showTimeLocks = getShowTimeLocks(movieId, showTime);
+        if (showTimeLocks == null) return false;
+        LockInfo lock = showTimeLocks.get(seatNumber);
+        if (lock == null) return false;
+        return !lock.isExpired();
+    }
+
+    public void clearLocksForSession(String sessionId) {
+        for (Map.Entry<Long, Map<String, Map<String, LockInfo>>> movieEntry : seatLocks.entrySet()) {
+            for (Map.Entry<String, Map<String, LockInfo>> showEntry : movieEntry.getValue().entrySet()) {
+                showEntry.getValue().entrySet().removeIf(entry -> {
+                    if (entry.getValue().sessionId.equals(sessionId)) {
+                        SeatEvent timeoutEvent = new SeatEvent(
+                                movieEntry.getKey(), showEntry.getKey(), entry.getKey(),
+                                SeatEvent.Action.TIMEOUT, sessionId
+                        );
+                        messagingTemplate.convertAndSend(
+                                "/topic/seats/" + movieEntry.getKey() + "/" + showEntry.getKey(),
+                                timeoutEvent
+                        );
+                        return true;
+                    }
+                    return false;
+                });
+            }
+        }
+    }
+
+    @Scheduled(fixedRate = 30000)
+    public void cleanupExpiredLocks() {
+        for (Map.Entry<Long, Map<String, Map<String, LockInfo>>> movieEntry : seatLocks.entrySet()) {
+            for (Map.Entry<String, Map<String, LockInfo>> showEntry : movieEntry.getValue().entrySet()) {
+                showEntry.getValue().entrySet().removeIf(entry -> {
+                    if (entry.getValue().isExpired()) {
+                        SeatEvent timeoutEvent = new SeatEvent(
+                                movieEntry.getKey(), showEntry.getKey(), entry.getKey(),
+                                SeatEvent.Action.TIMEOUT, entry.getValue().sessionId
+                        );
+                        messagingTemplate.convertAndSend(
+                                "/topic/seats/" + movieEntry.getKey() + "/" + showEntry.getKey(),
+                                timeoutEvent
+                        );
+                        return true;
+                    }
+                    return false;
+                });
+            }
+        }
+    }
+
+    public Set<String> getLockedSeats(Long movieId, String showTime) {
+        Map<String, LockInfo> showTimeLocks = getShowTimeLocks(movieId, showTime);
+        if (showTimeLocks == null) return new CopyOnWriteArraySet<>();
+
+        Set<String> locked = new CopyOnWriteArraySet<>();
+        for (Map.Entry<String, LockInfo> entry : showTimeLocks.entrySet()) {
+            if (!entry.getValue().isExpired()) {
+                locked.add(entry.getKey());
+            }
+        }
+        return locked;
+    }
 
     public long getRemainingSeconds(Long movieId, String showTime, String seatNumber) {
         Map<String, LockInfo> showTimeLocks = getShowTimeLocks(movieId, showTime);
@@ -52,7 +125,7 @@ public class SeatLockService {
         LockInfo lock = showTimeLocks.get(seatNumber);
         if (lock == null || lock.isExpired()) return 0;
 
-        long elapsedSeconds = ChronoUnit.SECONDS.between(lock.lockedAt, Instant.now());
+        long elapsedSeconds = ChronoUnit.SECONDS.between(lock.lockedAt, Instant.now()); // ✅ fixed
         return Math.max(0, LOCK_DURATION_MINUTES * 60 - elapsedSeconds);
     }
 
