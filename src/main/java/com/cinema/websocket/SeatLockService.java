@@ -4,7 +4,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Set;
@@ -23,15 +23,15 @@ public class SeatLockService {
 
     private static class LockInfo {
         final String sessionId;
-        final LocalDateTime lockedAt;
+        final Instant lockedAt;                          // ✅ was LocalDateTime
 
-        LockInfo(String sessionId, LocalDateTime lockedAt) {
+        LockInfo(String sessionId, Instant lockedAt) {   // ✅ was LocalDateTime
             this.sessionId = sessionId;
             this.lockedAt = lockedAt;
         }
 
         boolean isExpired() {
-            return ChronoUnit.MINUTES.between(lockedAt, LocalDateTime.now()) >= LOCK_DURATION_MINUTES;
+            return ChronoUnit.MINUTES.between(lockedAt, Instant.now()) >= LOCK_DURATION_MINUTES; // ✅ fixed
         }
     }
 
@@ -43,14 +43,14 @@ public class SeatLockService {
         seatLocks
                 .computeIfAbsent(movieId, k -> new ConcurrentHashMap<>())
                 .computeIfAbsent(showTime, k -> new ConcurrentHashMap<>())
-                .put(seatNumber, new LockInfo(sessionId, LocalDateTime.now()));
+                .put(seatNumber, new LockInfo(sessionId, Instant.now())); // ✅ was LocalDateTime.now()
     }
 
     public void unlockSeat(Long movieId, String showTime, String seatNumber, String sessionId) {
         Map<String, LockInfo> showTimeLocks = getShowTimeLocks(movieId, showTime);
         if (showTimeLocks != null) {
             showTimeLocks.computeIfPresent(seatNumber, (key, lock) ->
-                lock.sessionId.equals(sessionId) ? null : lock
+                    lock.sessionId.equals(sessionId) ? null : lock
             );
         }
     }
@@ -68,7 +68,6 @@ public class SeatLockService {
             for (Map.Entry<String, Map<String, LockInfo>> showEntry : movieEntry.getValue().entrySet()) {
                 showEntry.getValue().entrySet().removeIf(entry -> {
                     if (entry.getValue().sessionId.equals(sessionId)) {
-                        // Notify others that seat was released due to disconnect
                         SeatEvent timeoutEvent = new SeatEvent(
                                 movieEntry.getKey(), showEntry.getKey(), entry.getKey(),
                                 SeatEvent.Action.TIMEOUT, sessionId
@@ -85,7 +84,7 @@ public class SeatLockService {
         }
     }
 
-    @Scheduled(fixedRate = 30000) // every 30 seconds
+    @Scheduled(fixedRate = 30000)
     public void cleanupExpiredLocks() {
         for (Map.Entry<Long, Map<String, Map<String, LockInfo>>> movieEntry : seatLocks.entrySet()) {
             for (Map.Entry<String, Map<String, LockInfo>> showEntry : movieEntry.getValue().entrySet()) {
@@ -126,7 +125,7 @@ public class SeatLockService {
         LockInfo lock = showTimeLocks.get(seatNumber);
         if (lock == null || lock.isExpired()) return 0;
 
-        long elapsedSeconds = ChronoUnit.SECONDS.between(lock.lockedAt, LocalDateTime.now());
+        long elapsedSeconds = ChronoUnit.SECONDS.between(lock.lockedAt, Instant.now()); // ✅ fixed
         return Math.max(0, LOCK_DURATION_MINUTES * 60 - elapsedSeconds);
     }
 
