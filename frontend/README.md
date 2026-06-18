@@ -168,3 +168,6 @@ The application is fully responsive and works on:
 ### Build Issues
 - Delete `node_modules` and reinstall dependencies
 - Clear Vite cache: `npm run dev -- --force`
+
+- 
+Update README for CI verification.
